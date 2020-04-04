@@ -2,6 +2,10 @@
 
 A 4-button Wi-Fi connected remote, based on the original [Hugo-ESP8266 concept by mcer12](https://github.com/mcer12/Hugo-8266).
 
+## TinyPICO
+
+The code currently depends on having a [TinyPICO](https://tinypico.com) around, since I'm using this dev board. In the future I will remove dependencies to it and make it generic. This dev board has been selected for its very good low-power draw on deep sleep. Check out their [Discord server](https://discord.gg/83Nr7rz) for updates on this projects or for questions about the board.
+
 ## Credits
 
 A huge thanks to:
