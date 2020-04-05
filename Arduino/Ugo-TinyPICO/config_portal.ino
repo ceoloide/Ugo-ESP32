@@ -19,6 +19,9 @@ void startConfigPortal() {
   dnsServer.start(DNS_PORT, "*", ip);
   
   server.on("/", HTTP_ANY, handleRoot);
+  server.on("/common.css", HTTP_ANY, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/common.css", "text/css");
+  });
 
   // Handle known captive portal URLs, returning a 302
   server.on("/mobile/status.php", HTTP_ANY, handleCaptivePortal); // Android 8.0 
@@ -62,7 +65,7 @@ void handleCaptivePortal(AsyncWebServerRequest *request) {
   html += "<meta http-equiv='refresh' content='0; url=http://10.10.10.1/'>";
   html += "</head>";
   html += "<body>";
-  html += "<p>If page does not refresh, click <a href='PORTAL_URL'>here</a> to configure.</p>";
+  html += "<p>If page does not refresh, click <a href='http://10.10.10.1'>here</a> to configure.</p>";
   html += "</body>";
   html += "</html>";
 
@@ -70,14 +73,6 @@ void handleCaptivePortal(AsyncWebServerRequest *request) {
 }
 
 void handleRoot(AsyncWebServerRequest *request) {
-
-  const char* batteryColor = "#a53e3e"; // default RED
-  int batteryPercent = batteryPercentage();
-  if (batteryPercent >= 40) batteryColor = "#a57d3e";
-  if (batteryPercent >= 60) batteryColor = "#9ea53e";
-  if (batteryPercent >= 80) batteryColor = "#7ca53e";
-  if (batteryPercent > 100) batteryColor = "#3e7ea5";
-
   if (request->args()) {
     char *keys[] = {
       "id",
@@ -109,52 +104,8 @@ void handleRoot(AsyncWebServerRequest *request) {
     request->redirect("http://10.10.10.1/reset");
     return;
   }
-
-  String html = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Hugo Configuration</title><style>html,body{margin:0;padding:0;font-size:16px;background:#444;}body,*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif;}a{color:inherit;text-decoration:underline;}.wrapper{padding:30px 0;}.c{margin:auto;padding:40px;max-width:500px;color:#fff;background:#000;box-shadow:0 0 100px rgba(0,0,0,.5);border-radius:50px;}.r{margin-bottom:15px;}h1{margin:0 0 10px 0;font-family:Arial,sans-serif;font-weight:300;font-size:2rem;}h1 + p{margin-bottom:30px;}h2{margin:30px 0 0 0;font-family:Arial,sans-serif;font-weight:300;font-size:1.5rem;}p{font-size:.85rem;margin:0 0 20px 0;color:rgba(255,255,255,.7);}label{display:block;width:100%;margin-bottom:5px;}input[type=\"text\"],input[type=\"password\"]{display:inline-block;width:100%;height:42px;line-height:38px;padding:0 20px;color:#fff;border:2px solid #666;background:none;border-radius:5px;transition:.15s;box-shadow:none;outline:none;}input[type=\"text\"]:hover,input[type=\"password\"]:hover{border-color:#ababab;}input[type=\"text\"]:focus,input[type=\"password\"]:focus{border-color:#fff;}button{display:block;width:100%;padding:10px 20px;font-size:1rem;font-weight:700;text-transform:uppercase;background:#ff9c29;border:0;border-radius:5px;cursor:pointer;transition:.15s;outline:none;}button:hover{background:#ffba66;}.github{margin-top:15px;text-align:center;}.github a{color:#ff9c29;transition:.15s;}.github a:hover{color:#ffba66;}.bat p{margin:0 0 5px 0;text-align:center;text-transform:uppercase;font-size:.8rem;}.bat >div{position:relative;margin:0 auto 20px;width:300px;height:10px;background:#272727;border-radius:5px;}.bat >div >div{position:absolute;left:0;top:0;bottom:0;border-radius:5px;min-width:10px;}.mac{display:inline-block;margin-top:8px;padding:2px 5px;color:#fff;background:#444;border-radius:3px;}</style><style media=\"all and (max-width:520px)\">.wrapper{padding:20px 0;}.c{padding:25px 15px;border-radius:0;}</style></head><body><div class=\"wrapper\">";
-  html += "<div class=\"bat\"><p>Battery level: " + ((batteryPercent > 100) ? "Charging" : (String)batteryPercent + "%") + " (" + ((String)tp.GetBatteryVoltage()) + "V)</p><div><div style=\"background: " + batteryColor + ";width: " + ((batteryPercent > 100) ? 100 : batteryPercent) + "%\"></div></div></div>";
-  html += "<div class=\"c\"><form method=\"post\" action=\"/\"><h1>Hugo Configuration</h1><p>Press any of the Hugo's buttons to shut down config AP and resume normal function.</p><h2>Network settings</h2><p>Set your network credentials here.</p><div class=\"r\"><label for=\"id\">WiFi SSID</label><input type=\"text\" id=\"id\" name=\"id\" value=\"";
-  html += json["id"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"pw\">WiFi Password</label><input type=\"password\" id=\"pw\" name=\"pw\" value=\"";
-  html += json["pw"].as<const char*>();
-  html += "\"></div><h2>Static IP settings (optional)</h2><p>In some cases this might speed up response time. All 3 need to be set and IP should be reserved in router's DHCP settings.";
-  html += "<br>MAC address: <span class=\"mac\">";
-  html += macToStr(mac);
-  html += "</span></p>";
-  html += "<div class=\"r\"><label for=\"ip\">IP Address (optional):</label><input type=\"text\" id=\"ip\" name=\"ip\" value=\"";
-  html += json["ip"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"gw\">Gateway IP (optional):</label><input type=\"text\" id=\"gw\" name=\"gw\" value=\"";
-  html += json["gw"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"sn\">Subnet mask (optional):</label><input type=\"text\" id=\"sn\" name=\"sn\" value=\"";
-  html += json["sn"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"d1\">Primary DNS IP (optional):</label><input type=\"text\" id=\"d1\" name=\"d1\" value=\"";
-  html += json["d1"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"d2\">Secondary DNS IP (optional):</label><input type=\"text\" id=\"d2\" name=\"d2\" value=\"";
-  html += json["d2"].as<const char*>();
-  html += "\"></div>";
-  html += "<h2>Buttons settings</h2><p>Assign target URL for each button.<br>Use <b>[blvl]</b> shortcode to add battery percentage.<br>Use <b>[chrg]</b> shortcode to add battery voltage.<br>Use <b>[mac]</b> to add mac address (as unique identifier).<br>For example: \"http://example.com/?trigger=button1&battery_percentage=[blvl]&mac=[mac]\"</p>";
-  html += "<div class=\"r\"><label for=\"b1\">Button 1 url</label><input type=\"text\" id=\"b1\" name=\"b1\" value=\"";
-  html += json["b1"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"b2\">Button 2 url</label><input type=\"text\" id=\"b2\" name=\"b2\" value=\"";
-  html += json["b2"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"b3\">Button 3 url</label><input type=\"text\" id=\"b3\" name=\"b3\" value=\"";
-  html += json["b3"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"b4\">Button 4 url</label><input type=\"text\" id=\"b4\" name=\"b4\" value=\"";
-  html += json["b4"].as<const char*>();
-  html += "\"></div>";
-  html += "<h2>Button combinations</h2><p>Push two neighbouring buttons together and have them act as a virtual button.</p>";
-  html += "<div class=\"r\"><label for=\"b5\">B1+B2 url</label><input type=\"text\" id=\"b5\" name=\"b5\" value=\"";
-  html += json["b5"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"b6\">B2+B3 url</label><input type=\"text\" id=\"b6\" name=\"b6\" value=\"";
-  html += json["b6"].as<const char*>();
-  html += "\"></div><div class=\"r\"><label for=\"b7\">B3+B4 url</label><input type=\"text\" id=\"b7\" name=\"b7\" value=\"";
-  html += json["b7"].as<const char*>();
-  html += "\"></div>";
-  html += "<div class=\"r\"><button type=\"submit\">Save and reboot</button></div></form></div>";
-  html += "<div class=\"github\"><p>Firmware version";
-  html += FW_VERSION;
-  html += ", check out <a href=\"https://github.com/ceoloide/Ugo-ESP32" target=\"_blank\"><strong>Ugo-ESP32</strong> on GitHub</a></p></div>";
-  html += "</div></body></html>";
-  request->send(200, "text/html", html);
+  
+  request->send(SPIFFS, "/webconfig.html", "text/html", false, processor);
 }
 
 void notFound(AsyncWebServerRequest *request) {
@@ -162,26 +113,52 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 void handleReset(AsyncWebServerRequest *request) {
+  request->send(SPIFFS, "/reset.html", "text/html", false, processor);
+  Serial.print("Restarting in 2 seconds.");
+  goToSleep();
+}
 
-  const char* batteryColor = "#a53e3e"; // default RED
+String processor(const String& var)
+{
   int batteryPercent = batteryPercentage();
-  if (batteryPercent >= 40) batteryColor = "#a57d3e";
-  if (batteryPercent >= 60) batteryColor = "#9ea53e";
-  if (batteryPercent >= 80) batteryColor = "#7ca53e";
-  if (batteryPercent > 100) batteryColor = "#3e7ea5";
+  if(var == "BATTERY_CLASS") {
+    return ((batteryPercent > 100) ? "charging" : (String)batteryPercent);
+  } else if(var == "BATTERY_CHARGING_OR_PERCENT_HTML") {
+    return ((batteryPercent > 100) ? "Charging" : (String)batteryPercent + "&percnt;");
+  } else if(var == "BATTERY_VOLTAGE") {
+    return ((String)tp.GetBatteryVoltage());
+  } else if(var == "FIRMWARE_VERSION") {
+    return FW_VERSION;
+  } else if(var == "ID") {
+    return json["id"].as<const char*>();
+  } else if(var == "PW") {
+    return json["pw"].as<const char*>();
+  } else if(var == "IP") {
+    return json["ip"].as<const char*>();
+  } else if(var == "GW") {
+    return json["gw"].as<const char*>();
+  } else if(var == "SN") {
+    return json["sn"].as<const char*>();
+  } else if(var == "D1") {
+    return json["d1"].as<const char*>();
+  } else if(var == "D2") {
+    return json["d2"].as<const char*>();
+  } else if(var == "B1") {
+    return json["b1"].as<const char*>();
+  } else if(var == "B2") {
+    return json["b2"].as<const char*>();
+  } else if(var == "B3") {
+    return json["b3"].as<const char*>();
+  } else if(var == "B4") {
+    return json["b4"].as<const char*>();
+  } else if(var == "B5") {
+    return json["b5"].as<const char*>();
+  } else if(var == "B6") {
+    return json["b6"].as<const char*>();
+  } else if(var == "B7") {
+    return json["b7"].as<const char*>();
+  }
   
-  String rebootingHtml = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Hugo Configuration</title><style>html,body{margin:0;padding:0;font-size:16px;background:#444;}body,*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif;}a{color:inherit;text-decoration:underline;}.wrapper{padding:30px 0;}.c{margin:auto;padding:40px;max-width:500px;color:#fff;background:#000;box-shadow:0 0 100px rgba(0,0,0,.5);border-radius:50px;}.r{margin-bottom:15px;}h1{margin:0 0 10px 0;font-family:Arial,sans-serif;font-weight:300;font-size:2rem;}h1 + p{margin-bottom:30px;}h2{margin:30px 0 0 0;font-family:Arial,sans-serif;font-weight:300;font-size:1.5rem;}p{font-size:.85rem;margin:0 0 20px 0;color:rgba(255,255,255,.7);}label{display:block;width:100%;margin-bottom:5px;}input[type=\"text\"],input[type=\"password\"]{display:inline-block;width:100%;height:42px;line-height:38px;padding:0 20px;color:#fff;border:2px solid #666;background:none;border-radius:5px;transition:.15s;box-shadow:none;outline:none;}input[type=\"text\"]:hover,input[type=\"password\"]:hover{border-color:#ababab;}input[type=\"text\"]:focus,input[type=\"password\"]:focus{border-color:#fff;}button{display:block;width:100%;padding:10px 20px;font-size:1rem;font-weight:700;text-transform:uppercase;background:#ff9c29;border:0;border-radius:5px;cursor:pointer;transition:.15s;outline:none;}button:hover{background:#ffba66;}.github{margin-top:15px;text-align:center;}.github a{color:#ff9c29;transition:.15s;}.github a:hover{color:#ffba66;}.bat p{margin:0 0 5px 0;text-align:center;text-transform:uppercase;font-size:.8rem;}.bat >div{position:relative;margin:0 auto 20px;width:300px;height:10px;background:#272727;border-radius:5px;}.bat >div >div{position:absolute;left:0;top:0;bottom:0;border-radius:5px;min-width:10px;}.mac{display:inline-block;margin-top:8px;padding:2px 5px;color:#fff;background:#444;border-radius:3px;}</style><style media=\"all and (max-width:520px)\">.wrapper{padding:20px 0;}.c{padding:25px 15px;border-radius:0;}</style></head><body><div class=\"wrapper\">";
-  rebootingHtml += "<div class=\"bat\"><p>Battery level: " + ((batteryPercent > 100) ? "Charging" : (String)batteryPercent + "%") + " (" + ((String)tp.GetBatteryVoltage()) + "V)</p><div><div style=\"background: " + batteryColor + ";width: " + ((batteryPercent > 100) ? 100 : batteryPercent) + "%\"></div></div></div>";
-  rebootingHtml += "<div class=\"c\"><h1>Rebooting...</h1></div>";
-  rebootingHtml += "<div class=\"github\"><p>Firmware version";
-  rebootingHtml += FW_VERSION;
-  rebootingHtml += ", check out <a href=\"https://github.com/ceoloide/Ugo-ESP32\" target=\"_blank\"><strong>Ugo-ESP32</strong> on GitHub</a></p></div>";
-  rebootingHtml += "</div></body></html>";
-  request->send(302, "text/html", rebootingHtml);
-  delay(100);
-  server.end();
-  dnsServer.stop();
-  ESP.restart();
-  delay(100);
-  return;
+  // Return empty string as a default
+  return String();
 }

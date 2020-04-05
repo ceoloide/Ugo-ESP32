@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="refresh" content="0; url=http://10.10.10.1/">
+    <title>Redirecting to the configuration page.</title>
+    <link rel="stylesheet" type="text/css" href="common.css">
+    </style>
+    <style media="all and (max-width:520px)">
+        .wrapper {
+            padding: 20px 0;
+        }
+
+        .c {
+            padding: 25px 15px;
+            border-radius: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="bat">
+            <p>Battery level: %BATTERY_CHARGING_OR_PERCENT_HTML% (%BATTERY_VOLTAGE%V)</p>
+            <div>
+                <div class="bat-%BATTERY_CLASS%"></div>
+            </div>
+        </div>
+        <div class="c">
+            <h1>Redirecting...</h1>
+            <p>If page does not refresh, click <a href='http://10.10.10.1'>here</a> to configure.</p>
+        </div>
+    </div>
+</body>
+
+</html>
