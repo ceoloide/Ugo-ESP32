@@ -150,9 +150,9 @@ void handleRoot(AsyncWebServerRequest *request) {
   html += json["b7"].as<const char*>();
   html += "\"></div>";
   html += "<div class=\"r\"><button type=\"submit\">Save and reboot</button></div></form></div>";
-  html += "<div class=\"github\"><p>MQTT firmware ";
+  html += "<div class=\"github\"><p>Firmware version";
   html += FW_VERSION;
-  html += ", check out <a href=\"https://git.io/Jezc2\" target=\"_blank\"><strong>Hugo</strong> on GitHub</a></p></div>";
+  html += ", check out <a href=\"https://github.com/ceoloide/Ugo-ESP32" target=\"_blank\"><strong>Ugo-ESP32</strong> on GitHub</a></p></div>";
   html += "</div></body></html>";
   request->send(200, "text/html", html);
 }
@@ -173,9 +173,9 @@ void handleReset(AsyncWebServerRequest *request) {
   String rebootingHtml = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Hugo Configuration</title><style>html,body{margin:0;padding:0;font-size:16px;background:#444;}body,*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif;}a{color:inherit;text-decoration:underline;}.wrapper{padding:30px 0;}.c{margin:auto;padding:40px;max-width:500px;color:#fff;background:#000;box-shadow:0 0 100px rgba(0,0,0,.5);border-radius:50px;}.r{margin-bottom:15px;}h1{margin:0 0 10px 0;font-family:Arial,sans-serif;font-weight:300;font-size:2rem;}h1 + p{margin-bottom:30px;}h2{margin:30px 0 0 0;font-family:Arial,sans-serif;font-weight:300;font-size:1.5rem;}p{font-size:.85rem;margin:0 0 20px 0;color:rgba(255,255,255,.7);}label{display:block;width:100%;margin-bottom:5px;}input[type=\"text\"],input[type=\"password\"]{display:inline-block;width:100%;height:42px;line-height:38px;padding:0 20px;color:#fff;border:2px solid #666;background:none;border-radius:5px;transition:.15s;box-shadow:none;outline:none;}input[type=\"text\"]:hover,input[type=\"password\"]:hover{border-color:#ababab;}input[type=\"text\"]:focus,input[type=\"password\"]:focus{border-color:#fff;}button{display:block;width:100%;padding:10px 20px;font-size:1rem;font-weight:700;text-transform:uppercase;background:#ff9c29;border:0;border-radius:5px;cursor:pointer;transition:.15s;outline:none;}button:hover{background:#ffba66;}.github{margin-top:15px;text-align:center;}.github a{color:#ff9c29;transition:.15s;}.github a:hover{color:#ffba66;}.bat p{margin:0 0 5px 0;text-align:center;text-transform:uppercase;font-size:.8rem;}.bat >div{position:relative;margin:0 auto 20px;width:300px;height:10px;background:#272727;border-radius:5px;}.bat >div >div{position:absolute;left:0;top:0;bottom:0;border-radius:5px;min-width:10px;}.mac{display:inline-block;margin-top:8px;padding:2px 5px;color:#fff;background:#444;border-radius:3px;}</style><style media=\"all and (max-width:520px)\">.wrapper{padding:20px 0;}.c{padding:25px 15px;border-radius:0;}</style></head><body><div class=\"wrapper\">";
   rebootingHtml += "<div class=\"bat\"><p>Battery level: " + ((batteryPercent > 100) ? "Charging" : (String)batteryPercent + "%") + " (" + ((String)tp.GetBatteryVoltage()) + "V)</p><div><div style=\"background: " + batteryColor + ";width: " + ((batteryPercent > 100) ? 100 : batteryPercent) + "%\"></div></div></div>";
   rebootingHtml += "<div class=\"c\"><h1>Rebooting...</h1></div>";
-  rebootingHtml += "<div class=\"github\"><p>MQTT firmware ";
+  rebootingHtml += "<div class=\"github\"><p>Firmware version";
   rebootingHtml += FW_VERSION;
-  rebootingHtml += ", check out <a href=\"https://git.io/Jezc2\" target=\"_blank\"><strong>Hugo</strong> on GitHub</a></p></div>";
+  rebootingHtml += ", check out <a href=\"https://github.com/ceoloide/Ugo-ESP32\" target=\"_blank\"><strong>Ugo-ESP32</strong> on GitHub</a></p></div>";
   rebootingHtml += "</div></body></html>";
   request->send(302, "text/html", rebootingHtml);
   delay(100);
