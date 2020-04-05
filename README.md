@@ -11,7 +11,7 @@ The code currently depends on having a [TinyPICO](https://tinypico.com) around, 
 ## Credits
 
 A huge thanks to:
-- [@mcer12](http://github.com/mcer12) for the original [Hugo-ESP8266 concept](https://github.com/mcer12/Hugo-8266)
+- [@mcer12](https://github.com/mcer12) for the original [Hugo-ESP8266 concept](https://github.com/mcer12/Hugo-ESP8266)
 
 Shoutout to everyone working on the libraries used for this project:
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
