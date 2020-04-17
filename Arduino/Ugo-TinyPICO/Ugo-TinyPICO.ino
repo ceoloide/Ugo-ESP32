@@ -10,7 +10,6 @@
 #define BAT_VOLTAGE 35
 
 #ifdef ESP32
-#include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <AsyncTCP.h>
 #include <DNSServer.h>
@@ -26,10 +25,11 @@
 
 #include <ArduinoOTA.h>
 #include <HTTPClient.h>
+#include <PubSubClient.h>
 
 #define OTA_NAME "Ugo_" // Last 6 MAC address characters will be appended at the end of the OTA name, "Ugo_XXXXXX" by default
 #define AP_NAME "Ugo_" // Last 6 MAC address characters will be appended at the end of the AP name, "Ugo_XXXXXX" by default
-#define FW_VERSION "0.0.1"
+#define FW_VERSION "0.1.0"
 #define button1_pin 25
 #define button2_pin 26
 #define button3_pin 27
@@ -41,6 +41,14 @@
 #define NORMAL_MODE 0
 #define OTA_MODE 1
 #define CONFIG_MODE 2
+#define HASS_REGISTER_MODE 3
+
+#define MQTT_MAX_PACKET_SIZE 512
+
+// If the max message size is too small, throw an error at compile time. See PubSubClient.cpp line 359
+#if MQTT_MAX_PACKET_SIZE < 512  
+#error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to 512"
+#endif
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
@@ -60,6 +68,9 @@ AsyncWebServer server(80);
 
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 DynamicJsonDocument json(2048); // config buffer
 
@@ -207,9 +218,31 @@ void setup() {
 }
 
 void loop() {
-
   // Detect button combo to enter config mode
   toggleConfigMode();
+
+  if (deviceMode == CONFIG_MODE) {
+    Serial.println("STARTING CONFIG ACCESS POINT...");
+    tp.DotStar_SetPixelColor( 255, 255, 0);
+    delay(50);
+    startConfigPortal();
+    Serial.println("RETURNING TO NORMAL MODE...");
+    deviceMode = NORMAL_MODE;
+    return;
+  }
+
+  // Detect button combo to enter Hass.io register mode
+  toggleHassRegisterMode();
+
+  if (deviceMode == HASS_REGISTER_MODE) {
+    Serial.println("REGISTERING WITH HASS.IO...");
+    tp.DotStar_SetPixelColor( 255, 0, 255);
+    delay(50);
+    startHassRegister();
+    Serial.println("RETURNING TO NORMAL MODE...");
+    deviceMode = NORMAL_MODE;
+    return;
+  }
 
   // Detect button combo to enter OTA mode
   toggleOTAMode();
@@ -224,63 +257,21 @@ void loop() {
     return;
   }
 
-  if (deviceMode == CONFIG_MODE) {
-    Serial.println("STARTING CONFIG ACCESS POINT...");
-    tp.DotStar_SetPixelColor( 255, 255, 0);
-    delay(50);
-    startConfigPortal();
-    Serial.println("RETURNING TO NORMAL MODE...");
-    deviceMode = NORMAL_MODE;
-    return;
-  }
-
   if (deviceMode != NORMAL_MODE) return;
 
-  if (button == 1) {
-    sendHttpRequest(json["b1"].as<String>());
-    Serial.println("Button 1 was pressed!");
-    tp.DotStar_SetPixelColor( 255, 0, 0 );
-    delay(50);
+  handleButtonAction();
+
+  switch(button) {
+    case 1: tp.DotStar_SetPixelColor( 255, 0, 0 ); break;
+    case 2: tp.DotStar_SetPixelColor( 0, 255, 0 ); break;
+    case 3: tp.DotStar_SetPixelColor( 0, 0, 255 ); break;
+    case 4: tp.DotStar_SetPixelColor( 0, 255, 255 ); break;
+    case 5: tp.DotStar_SetPixelColor( 255, 0, 255 ); break;
+    case 6: tp.DotStar_SetPixelColor( 255, 255, 0 ); break;
+    case 7: tp.DotStar_SetPixelColor( 255, 255, 255 ); break;
+    default: break;
   }
-  else if (button == 2) {
-    sendHttpRequest(json["b2"].as<String>());
-    Serial.println("Button 2 was pressed!");
-    tp.DotStar_SetPixelColor( 0, 255, 0 );
-    delay(50);
-  }
-  else if (button == 3) {
-    sendHttpRequest(json["b3"].as<String>());
-    Serial.println("Button 3 was pressed!");    
-    tp.DotStar_SetPixelColor( 0, 0, 255 );
-    delay(50);
-  }
-  else if (button == 4) {
-    sendHttpRequest(json["b4"].as<String>());
-    Serial.println("Button 4 was pressed!");    
-    tp.DotStar_SetPixelColor( 0, 255, 255 );
-    delay(50);
-  }
-  else if (button == 5) {
-    sendHttpRequest(json["b5"].as<String>());
-    Serial.println("Button 5 (1+2) was pressed!");    
-    tp.DotStar_SetPixelColor( 255, 0, 255 );
-    delay(50);
-  }
-  else if (button == 6) {
-    sendHttpRequest(json["b6"].as<String>());
-    Serial.println("Button 6 (2+3) was pressed!");    
-    tp.DotStar_SetPixelColor( 255, 255, 0);
-    delay(50);
-  }
-  else if (button == 7) {
-    sendHttpRequest(json["b7"].as<String>());
-    Serial.println("Button 7 (3+4) was pressed!");    
-    tp.DotStar_SetPixelColor( 255, 255, 255 );
-    delay(50);
-  }
-  else {
-    Serial.println("Unknown button...");
-  }
+  delay(50);  // Give time to the dotstar to sync
 
   goToSleep();
 }

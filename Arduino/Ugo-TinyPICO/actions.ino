@@ -66,6 +66,22 @@ void toggleOTAMode() {
   }
 }
 
+void toggleHassRegisterMode() {
+  if (digitalRead(button2_pin) == HIGH && digitalRead(button4_pin) == HIGH) {
+    int i = 0;
+    while (digitalRead(button2_pin) == HIGH && digitalRead(button4_pin) == HIGH && i < 200) {
+      delay(10);
+
+      if (i > 100) {
+        deviceMode = HASS_REGISTER_MODE;
+        configTimer = millis(); // start counter
+        return;
+      }
+      i++;
+    }
+  }
+}
+
 void goToSleep() {
   Serial.println("Going to sleep in 1 second");
   delay(1000);
@@ -174,13 +190,13 @@ bool readConfig() {
   File stateFile = SPIFFS.open("/config.json");
   if (!stateFile) {
     Serial.println("Failed to read file, creating empty one.");
-    json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = json["gw"] = json["sn"] = json["b1"] = json["b2"] = json["b3"] = json["b4"] = json["b5"] = json["b6"] = json["b7"] = "";
+    json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = json["gw"] = json["sn"] = json["b1"] = json["b2"] = json["b3"] = json["b4"] = json["b5"] = json["b6"] = json["b7"] = json["mqttuser"] = json["mqttpass"] = "";
     saveConfig();
   }
   DeserializationError error = deserializeJson(json, stateFile.readString());
   if (error) {
     Serial.println("Failed to read file, creating empty one.");
-    json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = json["gw"] = json["sn"] = json["b1"] = json["b2"] = json["b3"] = json["b4"] = json["b5"] = json["b6"] = json["b7"] = "";
+    json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = json["gw"] = json["sn"] = json["b1"] = json["b2"] = json["b3"] = json["b4"] = json["b5"] = json["b6"] = json["b7"] = json["mqttuser"] = json["mqttpass"] = "";
     saveConfig();
   }
   stateFile.close();
@@ -226,6 +242,20 @@ uint8_t batteryPercentage() {
   return 0;
 }
 
+void handleButtonAction() {
+  if (button < 1 || button > 7) {
+    Serial.println("Unknown button...");
+    return;
+  }
+  Serial.println("Button " + String(button) + " was pressed!");
+  String buttonUrl = json["b" + String(button)].as<String>();
+  if (buttonUrl.indexOf("http") >= 0) {
+    sendHttpRequest(buttonUrl);
+  } else if (buttonUrl.indexOf("mqtt://") >= 0) {
+    publishButtonData(buttonUrl);
+  }
+}
+
 void sendHttpRequest(String buttonUrl) {
   int batteryPercent = batteryPercentage();
   if (batteryPercent > 100) batteryPercent = 100;
@@ -259,4 +289,92 @@ void sendHttpRequest(String buttonUrl) {
   }
   http.end();
   Serial.println(buttonUrl);
+}
+
+void mqtt_connect(const char* mqtt_usr, const char* mqtt_pass) {
+  String mqttClientId = "ugo_" + macLastThreeSegments(mac);
+  Serial.println("MQTT Client ID: " + mqttClientId);
+  int i = 0;
+  while (!client.connected() && i < 5) { // Try 5 times, then give up and go to sleep.
+    Serial.println("Attempting MQTT connection...");
+    if (mqtt_usr[0] != '\0' && mqtt_pass[0] != '\0') {
+      if (client.connect(mqttClientId.c_str(), mqtt_usr, mqtt_pass)) {
+        Serial.println("MQTT connected using credentials.");
+        return;
+      }
+    } else {
+      if (client.connect(mqttClientId.c_str())) {
+        Serial.println("MQTT connected anonymously.");
+        return;
+      }
+    }
+    Serial.print("MQTT connection attempt failed: ");
+    switch(client.state())
+    {
+      case MQTT_CONNECTION_TIMEOUT: Serial.println("the server didn't respond within the keepalive time"); break;
+      case MQTT_CONNECTION_LOST : Serial.println("the network connection was broken"); break;
+      case MQTT_CONNECT_FAILED: Serial.println("the network connection failed"); break;
+      case MQTT_DISCONNECTED: Serial.println("the client is disconnected cleanly"); break;
+      case MQTT_CONNECTED: Serial.println("the client is connected"); break;
+      case MQTT_CONNECT_BAD_PROTOCOL: Serial.println("the server doesn't support the requested version of MQTT"); break;
+      case MQTT_CONNECT_BAD_CLIENT_ID: Serial.println("the server rejected the client identifier"); break;
+      case MQTT_CONNECT_UNAVAILABLE: Serial.println("the server was unable to accept the connection"); break;
+      case MQTT_CONNECT_BAD_CREDENTIALS: Serial.println("the username/password were rejected"); break;
+      case MQTT_CONNECT_UNAUTHORIZED: Serial.println("the client was not authorized to connect"); break;
+      default: Serial.println("unknown state!"); break;
+    }
+    ++i;
+    delay(10);
+  }
+  goToSleep();
+}
+
+void publishButtonData(String buttonUrl) {
+  String uriWithoutProtocol = buttonUrl.substring(7);
+  String brokerAddress = uriWithoutProtocol.substring(0, uriWithoutProtocol.indexOf(":"));
+  int brokerPort = (uriWithoutProtocol.substring(uriWithoutProtocol.indexOf(":") + 1, uriWithoutProtocol.indexOf("/"))).toInt();
+  String topic = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("/") + 1, uriWithoutProtocol.indexOf("?"));
+  String payload = "";
+  if (uriWithoutProtocol.indexOf("?") >= 0) {
+    payload = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("?") + 1);
+  }
+  const char* mqtt_usr = json["mqttuser"].as<const char*>();
+  const char* mqtt_pass = json["mqttpass"].as<const char*>();
+  
+  Serial.println("URI (w/o protocol): " + uriWithoutProtocol);
+  Serial.println("Broker address: " + brokerAddress);
+  Serial.println("Broker port: " + brokerPort);
+  Serial.println("Topic: " + topic);
+  Serial.println("Payload: " + payload);
+  Serial.println("MQTT User: " + String(mqtt_usr));
+  Serial.println("MQTT Pass: " + String(mqtt_pass));
+  
+  client.setServer(brokerAddress.c_str(), brokerPort);
+  
+  mqtt_connect(mqtt_usr, mqtt_pass);
+  publishTopic(topic, payload);
+}
+
+void publishTopic(String topic, String payload) {
+  topic.replace("[id]", macLastThreeSegments(mac));
+  topic.replace("[blvl]", (String)batteryPercentage());
+  topic.replace("[chrg]", (String)tp.GetBatteryVoltage());
+  topic.replace("[mac]", macToStr(mac));
+  
+  payload.replace("[id]", macLastThreeSegments(mac));
+  payload.replace("[blvl]", (String)batteryPercentage());
+  payload.replace("[chrg]", (String)tp.GetBatteryVoltage());
+  payload.replace("[mac]", macToStr(mac));
+}
+
+void publishBatteryLevel() {
+//  String batTopic = json["batt"].as<String>();
+//  batTopic.replace("[id]", macLastThreeSegments(mac));
+//  if (batTopic.length() > 0) {
+//    delay(20); // lets give the broker little breath time
+//    client.publish(batTopic.c_str(), String(batteryPercentage()).c_str());
+//    Serial.print("Battery percentage: ");
+//    Serial.print(batteryPercentage());
+//    Serial.println("%");
+//  }
 }

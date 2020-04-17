@@ -88,9 +88,11 @@ void handleRoot(AsyncWebServerRequest *request) {
       "b4",
       "b5",
       "b6",
-      "b7"
+      "b7",
+      "mqttuser",
+      "mqttpass"
     };
-    for (int i = 0; i < 14; i++) {
+    for (int i = 0; i < 16; i++) {
       if (request->hasArg(keys[i])) {
         json[keys[i]] = request->arg(keys[i]);
         Serial.print("Received arg=");
@@ -157,6 +159,10 @@ String processor(const String& var)
     return json["b6"].as<const char*>();
   } else if(var == "B7") {
     return json["b7"].as<const char*>();
+  } else if(var == "MQTTUSER") {
+    return json["mqttuser"].as<const char*>();
+  } else if(var == "MQTTPASS") {
+    return json["mqttpass"].as<const char*>();
   }
   
   // Return empty string as a default
