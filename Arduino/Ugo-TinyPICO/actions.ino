@@ -228,17 +228,18 @@ uint8_t batteryPercentage() {
     Serial.println("Battery is charging.");
     return 200;
   }
-  
+
+  // The values below are a rough estimate calibrated for my own battery
   if(batteryVoltage > 4.2f) return 100;
   if(batteryVoltage > 4.1f) return 90;
-  if(batteryVoltage > 4.0f) return 80;
-  if(batteryVoltage > 3.90f) return 70;
-  if(batteryVoltage > 3.80f) return 60; // 3.8v ... 920
-  if(batteryVoltage > 3.75f) return 50;
-  if(batteryVoltage > 3.70f) return 40;
-  if(batteryVoltage > 3.65f) return 30;
-  if(batteryVoltage > 3.62f) return 20; // 3.65v ... 880
-  if(batteryVoltage > 3.60f) return 10;
+  if(batteryVoltage > 3.99f) return 80;
+  if(batteryVoltage > 3.94f) return 70;
+  if(batteryVoltage > 3.92f) return 60;
+  if(batteryVoltage > 3.88f) return 50;
+  if(batteryVoltage > 3.85f) return 40;
+  if(batteryVoltage > 3.82f) return 30;
+  if(batteryVoltage > 3.79f) return 20;
+  if(batteryVoltage > 3.71f) return 10;
   return 0;
 }
 
