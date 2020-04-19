@@ -43,10 +43,8 @@
 #define CONFIG_MODE 2
 #define HASS_REGISTER_MODE 3
 
-#define MQTT_MAX_PACKET_SIZE 512
-
 // If the max message size is too small, throw an error at compile time. See PubSubClient.cpp line 359
-#if MQTT_MAX_PACKET_SIZE < 512  
+#if MQTT_MAX_PACKET_SIZE < 512
 #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to 512"
 #endif
 

@@ -223,9 +223,9 @@ bool saveConfig() {
 /* Battery percentage estimation, this is not very accurate but close enough */
 uint8_t batteryPercentage() {
   float batteryVoltage = tp.GetBatteryVoltage();
-  Serial.println("Battery voltage: " + ((String)batteryVoltage) + "V");  
+//  Serial.println("Battery voltage: " + ((String)batteryVoltage) + "V");  
   if(tp.IsChargingBattery() && batteryVoltage > 4.3f) {
-    Serial.println("Battery is charging.");
+//    Serial.println("Battery is charging.");
     return 200;
   }
 
@@ -292,6 +292,23 @@ void sendHttpRequest(String buttonUrl) {
   Serial.println(buttonUrl);
 }
 
+void printPubSubClientState() {
+  switch(client.state())
+  {
+    case MQTT_CONNECTION_TIMEOUT: Serial.println("the server didn't respond within the keepalive time"); break;
+    case MQTT_CONNECTION_LOST : Serial.println("the network connection was broken"); break;
+    case MQTT_CONNECT_FAILED: Serial.println("the network connection failed"); break;
+    case MQTT_DISCONNECTED: Serial.println("the client is disconnected cleanly"); break;
+    case MQTT_CONNECTED: Serial.println("the client is connected"); break;
+    case MQTT_CONNECT_BAD_PROTOCOL: Serial.println("the server doesn't support the requested version of MQTT"); break;
+    case MQTT_CONNECT_BAD_CLIENT_ID: Serial.println("the server rejected the client identifier"); break;
+    case MQTT_CONNECT_UNAVAILABLE: Serial.println("the server was unable to accept the connection"); break;
+    case MQTT_CONNECT_BAD_CREDENTIALS: Serial.println("the username/password were rejected"); break;
+    case MQTT_CONNECT_UNAUTHORIZED: Serial.println("the client was not authorized to connect"); break;
+    default: Serial.println("unknown state!"); break;
+  }
+}
+
 void mqtt_connect(const char* mqtt_usr, const char* mqtt_pass) {
   String mqttClientId = "ugo_" + macLastThreeSegments(mac);
   Serial.println("MQTT Client ID: " + mqttClientId);
@@ -310,20 +327,7 @@ void mqtt_connect(const char* mqtt_usr, const char* mqtt_pass) {
       }
     }
     Serial.print("MQTT connection attempt failed: ");
-    switch(client.state())
-    {
-      case MQTT_CONNECTION_TIMEOUT: Serial.println("the server didn't respond within the keepalive time"); break;
-      case MQTT_CONNECTION_LOST : Serial.println("the network connection was broken"); break;
-      case MQTT_CONNECT_FAILED: Serial.println("the network connection failed"); break;
-      case MQTT_DISCONNECTED: Serial.println("the client is disconnected cleanly"); break;
-      case MQTT_CONNECTED: Serial.println("the client is connected"); break;
-      case MQTT_CONNECT_BAD_PROTOCOL: Serial.println("the server doesn't support the requested version of MQTT"); break;
-      case MQTT_CONNECT_BAD_CLIENT_ID: Serial.println("the server rejected the client identifier"); break;
-      case MQTT_CONNECT_UNAVAILABLE: Serial.println("the server was unable to accept the connection"); break;
-      case MQTT_CONNECT_BAD_CREDENTIALS: Serial.println("the username/password were rejected"); break;
-      case MQTT_CONNECT_UNAUTHORIZED: Serial.println("the client was not authorized to connect"); break;
-      default: Serial.println("unknown state!"); break;
-    }
+    printPubSubClientState();
     ++i;
     delay(10);
   }
@@ -356,26 +360,37 @@ void publishButtonData(String buttonUrl) {
   publishTopic(topic, payload);
 }
 
-void publishTopic(String topic, String payload) {
+void publishTopic(String topic, StaticJsonDocument<512>& payload) {
+  char serializedPayload[512];
+  serializeJson(payload, serializedPayload);
+  Serial.println("Serialized payload" + String(serializedPayload));
+  publishTopic(topic, String(serializedPayload));
+  payload.clear();
+}
+
+void publishTopic(String topic, String payload) {  
+  Serial.println("Original topic: " + topic);
   topic.replace("[id]", macLastThreeSegments(mac));
   topic.replace("[blvl]", (String)batteryPercentage());
   topic.replace("[chrg]", (String)tp.GetBatteryVoltage());
   topic.replace("[mac]", macToStr(mac));
+  Serial.println("Compiled topic: " + topic);
   
+  Serial.println("Original payload: " + payload);
   payload.replace("[id]", macLastThreeSegments(mac));
   payload.replace("[blvl]", (String)batteryPercentage());
   payload.replace("[chrg]", (String)tp.GetBatteryVoltage());
   payload.replace("[mac]", macToStr(mac));
+  Serial.println("Compiled payload: " + payload);
+  
+  if (client.publish(topic.c_str(), payload.c_str())) {
+    Serial.println("Successfully published.");
+  } else {
+    Serial.print("Failed to publish, error = ");
+    printPubSubClientState();
+  }
 }
 
 void publishBatteryLevel() {
-//  String batTopic = json["batt"].as<String>();
-//  batTopic.replace("[id]", macLastThreeSegments(mac));
-//  if (batTopic.length() > 0) {
-//    delay(20); // lets give the broker little breath time
-//    client.publish(batTopic.c_str(), String(batteryPercentage()).c_str());
-//    Serial.print("Battery percentage: ");
-//    Serial.print(batteryPercentage());
-//    Serial.println("%");
-//  }
+  publishTopic("homeassistant/sensor/ugo_[id]/battery", "[blvl]");
 }
