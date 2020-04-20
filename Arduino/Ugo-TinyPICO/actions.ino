@@ -358,6 +358,8 @@ void publishButtonData(String buttonUrl) {
   
   mqtt_connect(mqtt_usr, mqtt_pass);
   publishTopic(topic, payload);
+  client.loop();
+  client.disconnect();
 }
 
 void publishTopic(String topic, StaticJsonDocument<512>& payload) {
