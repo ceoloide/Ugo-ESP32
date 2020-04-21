@@ -1,8 +1,8 @@
 steps:
-- name: 'sglahn/platformio-core:latest'  
+- name: 'suculent/platformio-docker-build'
   dir: .
   args: ['run']  
 artifacts: 
   objects: 
     location: 'gs://$PROJECT_ID-firmwares/$TAG_NAME'
-    paths: ['/workspace/.pioenvs/esp32/firmware_esp32.bin']
+    paths: ['/workspace/bin/firmware.bin']
