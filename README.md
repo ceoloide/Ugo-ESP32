@@ -22,4 +22,4 @@ Shoutout to everyone working on the libraries used for this project:
 
 ## License 
 
-This software is licensed under the APACHE 2.0 License. See the [license file](LICENSE) for details.  
+This software is licensed under the APACHE 2.0 License. See the [license file](LICENSE) for details.
