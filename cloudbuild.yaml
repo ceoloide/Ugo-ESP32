@@ -5,4 +5,4 @@ steps:
 artifacts: 
   objects: 
     location: 'gs://$PROJECT_ID-firmwares/$TAG_NAME'
-    paths: ['/workspace/bin/firmware.bin']
+    paths: ['/workspace/.pioenvs/tinypico/firmware.bin']
