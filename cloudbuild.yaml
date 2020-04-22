@@ -1,8 +1,8 @@
 steps:
-- name: 'sglahn/platformio-core:3.6.0'
+- name: 'sglahn/platformio-core:4.3.1'
   dir: .
   args: ['run']  
 artifacts: 
   objects: 
     location: 'gs://$PROJECT_ID-firmwares/$TAG_NAME'
-    paths: ['/workspace/.pioenvs/tinypico/firmware.bin']
+    paths: ['/workspace/.pio/build/tinypico/firmware.bin']
