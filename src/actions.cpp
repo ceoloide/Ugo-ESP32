@@ -527,7 +527,7 @@ void publishButtonData(String buttonUri)
     // Expected: [username]:[password]@[address]:[port]
     String uriAddress = uriWithoutProtocol.substring(0, uriWithoutProtocol.indexOf("/"));
     // Expected: [topic]?[payload]
-    String uriPath = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("/"));
+    String uriPath = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("/") + 1);
 
     int credentialsSeparatorIndex = uriAddress.indexOf("@");
     int portSeparatorIndex = uriAddress.indexOf(":", credentialsSeparatorIndex + 1);
