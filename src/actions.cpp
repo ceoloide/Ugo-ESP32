@@ -523,7 +523,7 @@ void publishButtonData(String buttonUri)
     // Expected: mqtt[s]
     String protocol = buttonUri.substring(0, buttonUri.indexOf(":"));
     // Expected: [username]:[password]@[address]:[port]/[topic]?[payload]
-    String uriWithoutProtocol = buttonUri.substring(buttonUri.length() + 3);
+    String uriWithoutProtocol = buttonUri.substring(protocol.length() + 3);
     // Expected: [username]:[password]@[address]:[port]
     String uriAddress = uriWithoutProtocol.substring(0, uriWithoutProtocol.indexOf("/"));
     // Expected: [topic]?[payload]
@@ -533,13 +533,13 @@ void publishButtonData(String buttonUri)
     int portSeparatorIndex = uriAddress.indexOf(":", credentialsSeparatorIndex + 1);
     int usernameSeparatorIndex = min(uriAddress.indexOf(":"), uriAddress.indexOf("@"));
     int payloadSeparatorIndex = uriPath.indexOf("?");
-
+    
     String brokerAddress = uriAddress.substring(credentialsSeparatorIndex + 1, portSeparatorIndex);
     int brokerPort;
 
     if (portSeparatorIndex >= 0)
     {
-        brokerPort = brokerAddress.substring(portSeparatorIndex + 1).toInt();
+        brokerPort = uriAddress.substring(portSeparatorIndex + 1).toInt();
     }
     else
     {
@@ -554,20 +554,19 @@ void publishButtonData(String buttonUri)
         }
     }
 
-    const char *username = String("").c_str();
-    const char *password = String("").c_str();
+    String username = "";
+    String password = "";
 
     if (credentialsSeparatorIndex >= 0)
     {
-        String usernamePassword = brokerAddress.substring(0, credentialsSeparatorIndex);
         if (usernameSeparatorIndex < credentialsSeparatorIndex)
         {
-            username = usernamePassword.substring(0, usernameSeparatorIndex).c_str();
-            password = usernamePassword.substring(usernameSeparatorIndex + 1).c_str();
+            username = uriAddress.substring(0, usernameSeparatorIndex);
+            password = uriAddress.substring(usernameSeparatorIndex + 1, credentialsSeparatorIndex);
         }
         else
         {
-            username = usernamePassword.c_str();
+            username = uriAddress.substring(0, credentialsSeparatorIndex);
         }
     }
 
@@ -580,17 +579,29 @@ void publishButtonData(String buttonUri)
         payload = uriPath.substring(payloadSeparatorIndex + 1);
     }
 
+#if CORE_DEBUG_LEVEL == 5
+    Serial.println("[buttonUri]: " + buttonUri);
+    Serial.println("[protocol]: " + protocol);
+    Serial.println("[uriWithoutProtocol]: " + uriWithoutProtocol);
+    Serial.println("[uriAddress]: " + uriAddress);
+    Serial.println("[uriPath]: " + uriPath);
+    Serial.println("[credentialsSeparatorIndex]: " + String(credentialsSeparatorIndex));
+    Serial.println("[portSeparatorIndex]: " + String(portSeparatorIndex));
+    Serial.println("[usernameSeparatorIndex]: " + String(usernameSeparatorIndex));
+    Serial.println("[payloadSeparatorIndex]: " + String(payloadSeparatorIndex));
+#endif
+#if CORE_DEBUG_LEVEL >= 4
     Serial.println("URI: " + buttonUri);
     Serial.println("Broker address: " + brokerAddress);
-    Serial.println("Broker port: " + brokerPort);
+    Serial.println("Broker port: " + String(brokerPort));
     Serial.println("Topic: " + topic);
     Serial.println("Payload: " + payload);
-    Serial.println("MQTT User: " + String(username));
-    Serial.println("MQTT Pass: " + String(password));
+    Serial.println("MQTT User: " + username);
+    Serial.println("MQTT Pass: " + password);
+#endif
 
     client.setServer(brokerAddress.c_str(), brokerPort);
-
-    mqtt_connect(username, password);
+    mqtt_connect(username.c_str(), password.c_str());
     publishTopic(topic, payload);
     client.loop();
     client.disconnect();
