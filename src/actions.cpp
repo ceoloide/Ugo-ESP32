@@ -347,17 +347,17 @@ uint8_t batteryPercentage()
     return 0;
 }
 
-void sendHttpRequest(String buttonUrl)
+void sendHttpRequest(String buttonUri)
 {
     int batteryPercent = batteryPercentage();
     if (batteryPercent > 100)
         batteryPercent = 100;
 
-    buttonUrl.replace("[blvl]", (String)batteryPercent);
-    buttonUrl.replace("[chrg]", (String)tp.GetBatteryVoltage());
-    buttonUrl.replace("[mac]", macToStr(mac));
+    buttonUri.replace("[blvl]", (String)batteryPercent);
+    buttonUri.replace("[chrg]", (String)tp.GetBatteryVoltage());
+    buttonUri.replace("[mac]", macToStr(mac));
 
-    if (buttonUrl.length() == 0 || buttonUrl == "null" || buttonUrl == NULL)
+    if (buttonUri.length() == 0 || buttonUri == "null" || buttonUri == NULL)
     {
         Serial.println("Button URL is not defined. Set it in config portal.");
         return;
@@ -366,15 +366,15 @@ void sendHttpRequest(String buttonUrl)
     std::unique_ptr<WiFiClientSecure> client(new WiFiClientSecure);
     HTTPClient http;
 
-    if (buttonUrl.indexOf("https:") >= 0)
+    if (buttonUri.indexOf("https:") >= 0)
     {
         Serial.print("SSL mode...");
-        http.begin(*client, buttonUrl);
+        http.begin(*client, buttonUri);
     }
     else
     {
         Serial.print("HTTP mode...");
-        http.begin(buttonUrl);
+        http.begin(buttonUri);
     }
 
     int httpCode = http.GET();
@@ -388,7 +388,7 @@ void sendHttpRequest(String buttonUrl)
         Serial.print("Request failed, URL: ");
     }
     http.end();
-    Serial.println(buttonUrl);
+    Serial.println(buttonUri);
 }
 
 void printPubSubClientState()
@@ -431,7 +431,7 @@ void printPubSubClientState()
     }
 }
 
-void mqtt_connect(const char *mqtt_usr, const char *mqtt_pass)
+void mqtt_connect(const char *username, const char *password)
 {
     String mqttClientId = "ugo_" + macLastThreeSegments(mac);
     Serial.println("MQTT Client ID: " + mqttClientId);
@@ -439,9 +439,9 @@ void mqtt_connect(const char *mqtt_usr, const char *mqtt_pass)
     while (!client.connected() && i < 5)
     { // Try 5 times, then give up and go to sleep.
         Serial.println("Attempting MQTT connection...");
-        if (mqtt_usr[0] != '\0' && mqtt_pass[0] != '\0')
+        if (username[0] != '\0' && password[0] != '\0')
         {
-            if (client.connect(mqttClientId.c_str(), mqtt_usr, mqtt_pass))
+            if (client.connect(mqttClientId.c_str(), username, password))
             {
                 Serial.println("MQTT connected using credentials.");
                 return;
@@ -463,7 +463,7 @@ void mqtt_connect(const char *mqtt_usr, const char *mqtt_pass)
     goToSleep();
 }
 
-void publishTopic(String topic, String payload)
+void publishTopic(String topic, String payload, bool retained)
 {
     Serial.println("Original topic: " + topic);
     topic.replace("[id]", macLastThreeSegments(mac));
@@ -479,7 +479,7 @@ void publishTopic(String topic, String payload)
     payload.replace("[mac]", macToStr(mac));
     Serial.println("Compiled payload: " + payload);
 
-    if (client.publish(topic.c_str(), payload.c_str()))
+    if (client.publish(topic.c_str(), payload.c_str(), retained))
     {
         Serial.println("Successfully published.");
     }
@@ -490,12 +490,19 @@ void publishTopic(String topic, String payload)
     }
 }
 
+void publishTopic(String topic, String payload)
+{
+    bool retained = false;
+    publishTopic(topic, payload, retained);
+}
+
 void publishTopic(String topic, StaticJsonDocument<512> &payload)
 {
+    bool retained = false;
     char serializedPayload[512];
     serializeJson(payload, serializedPayload);
     Serial.println("Serialized payload" + String(serializedPayload));
-    publishTopic(topic, String(serializedPayload));
+    publishTopic(topic, String(serializedPayload), retained);
     payload.clear();
 }
 
@@ -504,31 +511,82 @@ void publishBatteryLevel()
     publishTopic("homeassistant/sensor/ugo_[id]/battery", "[blvl]");
 }
 
-void publishButtonData(String buttonUrl)
+void publishButtonData(String buttonUri)
 {
-    String uriWithoutProtocol = buttonUrl.substring(7);
-    String brokerAddress = uriWithoutProtocol.substring(0, uriWithoutProtocol.indexOf(":"));
-    int brokerPort = (uriWithoutProtocol.substring(uriWithoutProtocol.indexOf(":") + 1, uriWithoutProtocol.indexOf("/"))).toInt();
-    String topic = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("/") + 1, uriWithoutProtocol.indexOf("?"));
-    String payload = "";
-    if (uriWithoutProtocol.indexOf("?") >= 0)
-    {
-        payload = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("?") + 1);
-    }
-    const char *mqtt_usr = json["mqttuser"].as<const char *>();
-    const char *mqtt_pass = json["mqttpass"].as<const char *>();
+    // The user can specify a MQTT URI as follows:
+    //   mqtt[s]://[username]:[password]@[address]:[port]/[topic]?[payload]
 
-    Serial.println("URI (w/o protocol): " + uriWithoutProtocol);
+    // Expected: mqtt[s]
+    String protocol = buttonUri.substring(0, buttonUri.indexOf(":"));
+    // Expected: [username]:[password]@[address]:[port]/[topic]?[payload]
+    String uriWithoutProtocol = buttonUri.substring(buttonUri.length() + 3);
+    // Expected: [username]:[password]@[address]:[port]
+    String uriAddress = uriWithoutProtocol.substring(0, uriWithoutProtocol.indexOf("/"));
+    // Expected: [topic]?[payload]
+    String uriPath = uriWithoutProtocol.substring(uriWithoutProtocol.indexOf("/"));
+
+    int credentialsSeparatorIndex = uriAddress.indexOf("@");
+    int portSeparatorIndex = uriAddress.indexOf(":", credentialsSeparatorIndex + 1);
+    int usernameSeparatorIndex = min(uriAddress.indexOf(":"), uriAddress.indexOf("@"));
+    int payloadSeparatorIndex = uriPath.indexOf("?");
+
+    String brokerAddress = uriAddress.substring(credentialsSeparatorIndex + 1, portSeparatorIndex);
+    int brokerPort;
+
+    if (portSeparatorIndex >= 0)
+    {
+        brokerPort = brokerAddress.substring(portSeparatorIndex + 1).toInt();
+    }
+    else
+    {
+        // No port was specified, defaulting to 1883 for mqtt and 8883 for mqtts
+        if (protocol.equals("mqtt"))
+        {
+            brokerPort = 1883;
+        }
+        else
+        {
+            brokerPort = 8883;
+        }
+    }
+
+    const char *username = String("").c_str();
+    const char *password = String("").c_str();
+
+    if (credentialsSeparatorIndex >= 0)
+    {
+        String usernamePassword = brokerAddress.substring(0, credentialsSeparatorIndex);
+        if (usernameSeparatorIndex < credentialsSeparatorIndex)
+        {
+            username = usernamePassword.substring(0, usernameSeparatorIndex).c_str();
+            password = usernamePassword.substring(usernameSeparatorIndex + 1).c_str();
+        }
+        else
+        {
+            username = usernamePassword.c_str();
+        }
+    }
+
+    String topic = uriPath;
+    String payload = "";
+
+    if (payloadSeparatorIndex >= 0)
+    {
+        topic = uriPath.substring(0, payloadSeparatorIndex);
+        payload = uriPath.substring(payloadSeparatorIndex + 1);
+    }
+
+    Serial.println("URI: " + buttonUri);
     Serial.println("Broker address: " + brokerAddress);
     Serial.println("Broker port: " + brokerPort);
     Serial.println("Topic: " + topic);
     Serial.println("Payload: " + payload);
-    Serial.println("MQTT User: " + String(mqtt_usr));
-    Serial.println("MQTT Pass: " + String(mqtt_pass));
+    Serial.println("MQTT User: " + String(username));
+    Serial.println("MQTT Pass: " + String(password));
 
     client.setServer(brokerAddress.c_str(), brokerPort);
 
-    mqtt_connect(mqtt_usr, mqtt_pass);
+    mqtt_connect(username, password);
     publishTopic(topic, payload);
     client.loop();
     client.disconnect();
@@ -542,13 +600,13 @@ void handleButtonAction()
         return;
     }
     Serial.println("Button " + String(button) + " was pressed!");
-    String buttonUrl = json["b" + String(button)].as<String>();
-    if (buttonUrl.indexOf("http") >= 0)
+    String buttonUri = json["b" + String(button)].as<String>();
+    if (buttonUri.indexOf("http") >= 0)
     {
-        sendHttpRequest(buttonUrl);
+        sendHttpRequest(buttonUri);
     }
-    else if (buttonUrl.indexOf("mqtt://") >= 0)
+    else if (buttonUri.indexOf("mqtt://") >= 0)
     {
-        publishButtonData(buttonUrl);
+        publishButtonData(buttonUri);
     }
 }

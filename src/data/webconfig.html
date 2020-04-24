@@ -73,10 +73,12 @@
                                         address (as unique
                                         identifier).<br>For example:
                                         "http://example.com/?trigger=button1&battery_percentage=[blvl]&mac=[mac]"</p>
-                                <p>You can set MQTT topics to publish as a URI.<br>Use mqtt:// as a protocol, then
-                                        specify the broker
-                                        address and port, finally the full topic as a URI path.<br>For example:
-                                        "mqtt://192.168.1.202:1883/home-assistant/light/1/command"</p>
+                                <p>You can set MQTT topics to publish as a URI.<br>Use mqtt:// or mqtts:// as a
+                                        protocol, optionally provide a user and password, then specify the broker
+                                        address and port, finally the full topic as a path followed by the
+                                        payload.<br>For example:
+                                        "mqtt://username:password@192.168.1.202:1883/home-assistant/light/1/command?ON"
+                                </p>
                                 <div class="r"><label for="b1">Button 1 url</label><input type="text" id="b1" name="b1"
                                                 value="%B1%">
                                 </div>

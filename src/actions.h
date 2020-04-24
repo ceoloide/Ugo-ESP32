@@ -38,6 +38,8 @@ void printPubSubClientState();
 
 void mqtt_connect(const char *mqtt_usr, const char *mqtt_pass);
 
+void publishTopic(String topic, String payload, bool retained);
+
 void publishTopic(String topic, String payload);
 
 void publishTopic(String topic, StaticJsonDocument<512> &payload);
