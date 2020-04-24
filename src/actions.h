@@ -42,6 +42,8 @@ void publishTopic(String topic, String payload, bool retained);
 
 void publishTopic(String topic, String payload);
 
+void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained);
+
 void publishTopic(String topic, StaticJsonDocument<512> &payload);
 
 void publishBatteryLevel();

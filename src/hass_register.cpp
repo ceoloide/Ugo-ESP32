@@ -29,7 +29,10 @@ void startHassRegister()
     device["mdl"] = "Ugo-TinyPICO";
     device["sw"] = FW_VERSION;
 
-    publishTopic(configTopic, payload);
+    publishTopic(configTopic, payload, true);
+    client.loop();
+    Serial.println("Sending state data...");
+    publishTopic(stateTopic, String(batteryPercentage()));
     client.loop();
     client.disconnect();
 

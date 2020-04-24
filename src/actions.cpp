@@ -496,14 +496,18 @@ void publishTopic(String topic, String payload)
     publishTopic(topic, payload, retained);
 }
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload)
+void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained)
 {
-    bool retained = false;
     char serializedPayload[512];
     serializeJson(payload, serializedPayload);
     Serial.println("Serialized payload" + String(serializedPayload));
     publishTopic(topic, String(serializedPayload), retained);
-    payload.clear();
+}
+
+void publishTopic(String topic, StaticJsonDocument<512> &payload)
+{
+    bool retained = false;
+    publishTopic(topic, payload, retained);
 }
 
 void publishBatteryLevel()
