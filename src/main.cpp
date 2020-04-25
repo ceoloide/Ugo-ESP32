@@ -147,14 +147,14 @@ void setup()
     const char *d1 = json["d1"].as<const char *>();
     const char *d2 = json["d2"].as<const char *>();
 
-    if (json["id"] != "" && json["id"] != "")
+    if (json["id"] != "" && json["pw"] != "")
     {
         WiFi.mode(WIFI_STA);
 
         IPAddress ip_address, gateway_ip, subnet_mask, dns_address_1, dns_address_2;
         if (ip[0] != '\0' && gw[0] != '\0' && sn[0] != '\0')
         {
-            if (!ip_address.fromString(ip) || !gateway_ip.fromString(gw) || !subnet_mask.fromString(sn))
+            if (!ip_address.fromString(String(ip)) || !gateway_ip.fromString(String(gw)) || !subnet_mask.fromString(String(sn)))
             {
                 Serial.println("Error setting up static IP, using auto IP instead. Check your configuration.");
             }
@@ -162,7 +162,7 @@ void setup()
             {
                 if (d1[0] != '\0')
                 {
-                    if (!dns_address_1.fromString(d1))
+                    if (!dns_address_1.fromString(String(d1)))
                     {
                         Serial.println("Error setting up primary DNS, using auto DNS instead. Check your configuration.");
                         // The second use of gateway_ip is to pass the gateway as a DNS IP, since otherwise host resolution doesn't work.
@@ -175,7 +175,7 @@ void setup()
                     {
                         if (d2[0] != '\0')
                         {
-                            if (!dns_address_2.fromString(d2))
+                            if (!dns_address_2.fromString(String(d2)))
                             {
                                 Serial.println("Error setting up secondary DNS, using auto DNS instead. Check your configuration.");
                                 if (!WiFi.config(ip_address, gateway_ip, subnet_mask, dns_address_1))
@@ -324,11 +324,11 @@ void loop()
         break;
     }
     delay(50); // Give time to the dotstar to sync
-    
+
     if (json["ha_enabled"].as<bool>())
     {
         publishBatteryLevel();
     }
-    
+
     goToSleep();
 }
