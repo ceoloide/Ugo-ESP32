@@ -59,13 +59,6 @@
                                                 id="d1" name="d1" value="%D1%"></div>
                                 <div class="r"><label for="d2">Secondary DNS IP (optional):</label><input type="text"
                                                 id="d2" name="d2" value="%D2%"></div>
-                                <h2>MQTT Authentication (optional)</h2>
-                                <p>Set your MQTT credentials here. Leave them empty for anonymous connections.</p>
-                                <div class="r"><label for="mqttuser">MQTT User</label><input type="text" id="mqttuser"
-                                                name="mqttuser" value="%MQTTUSER%">
-                                </div>
-                                <div class="r"><label for="mqttpass">MQTT Password</label><input type="password"
-                                                id="mqttpass" name="mqttpass" value="%MQTTPASS%"></div>
                                 <h2>Button settings</h2>
                                 <p>Assign a target URL for each button.<br>Use <b>[blvl]</b> shortcode to add battery
                                         percentage.<br>Use
@@ -102,11 +95,39 @@
                                 <div class="r"><label for="b7">B3+B4 url</label><input type="text" id="b7" name="b7"
                                                 value="%B7%">
                                 </div>
+                                <h2>Home Assistant Integration (optional)</h2>
+                                <p>The following section can be used to customize the settings for Home Assistant MQTT
+                                        Discovery.</p>
+                                </p>Set your MQTT credentials here. Leave them empty for anonymous connections.</p>
+                                <div class="r"><label for="ha_user">User</label><input type="text" id="ha_user"
+                                                name="ha_user" value="%HA_USER%">
+                                </div>
+                                <div class="r"><label for="ha_password">Password</label><input type="password"
+                                                id="ha_password" name="ha_password" value="%HA_PASSWORD%"></div>
+                                </p>Set your broker details, these are all required.</p>
+                                <div class="r"><label for="ha_broker">Broker address</label><input type="text"
+                                                id="ha_broker" name="ha_broker" value="%HA_BROKER%">
+                                </div>
+                                <div class="r"><label for="ha_port">Broker port</label><input type="text" id="ha_port"
+                                                name="ha_port" value="%HA_PORT%">
+                                </div>
+                                </p>Customize your discovery topic prefix.</p>
+                                <div class="r"><label for="ha_prefix">Discovery prefix</label><input type="text"
+                                                id="ha_prefix" name="ha_prefix" value="%HA_PREFIX%">
+                                </div>
+                                <p> Once the following option is enabled, Ugo will publish device status (battery,
+                                        voltage, which button was pressed) to Home Assistant every time it gets used,
+                                        automatically.</p>
+                                <p>NOTE: you will need to register this device on Home Assistant separately, for example
+                                        using MQTT Discovery by pressing and holding B2+B4.</p>
+                                <div class="r"><label for="ha_enabled">Enable auto-updates</label><input type="checkbox"
+                                                id="ha_enabled" name="ha_enabled" %HA_ENABLED%>
+                                </div>
                                 <div class="r"><button type="submit">Save and reboot</button></div>
                         </form>
                 </div>
                 <div class="github">
-                        <p>Firmware V%FIRMWARE_VERSION%, check out <a href="https://github.com/ceoloide/Ugo-ESP32"
+                        <p>Firmware v%FIRMWARE_VERSION%, check out <a href="https://github.com/ceoloide/Ugo-ESP32"
                                         target="_blank"><strong>Ugo-ESP32</strong> on GitHub</a></p>
                 </div>
         </div>
