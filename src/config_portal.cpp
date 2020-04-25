@@ -76,13 +76,36 @@ String processor(const String &var)
     {
         return json["b7"].as<const char *>();
     }
-    else if (var == "MQTTUSER")
+    else if (var == "HA_ENABLED")
     {
-        return json["mqttuser"].as<const char *>();
+        if (json["ha_enabled"].as<bool>() == true)
+        {
+            return "checked";
+        }
+        else
+        {
+            return "";
+        }
     }
-    else if (var == "MQTTPASS")
+    else if (var == "HA_USER")
     {
-        return json["mqttpass"].as<const char *>();
+        return json["ha_user"].as<const char *>();
+    }
+    else if (var == "HA_PASSWORD")
+    {
+        return json["ha_password"].as<const char *>();
+    }
+    else if (var == "HA_BROKER")
+    {
+        return json["ha_broker"].as<const char *>();
+    }
+    else if (var == "HA_PORT")
+    {
+        return String(json["ha_port"].as<int>());
+    }
+    else if (var == "HA_PREFIX")
+    {
+        return json["ha_prefix"].as<const char *>();
     }
 
     // Return empty string as a default
@@ -126,9 +149,11 @@ void handleRoot(AsyncWebServerRequest *request)
             "b5",
             "b6",
             "b7",
-            "mqttuser",
-            "mqttpass"};
-        for (int i = 0; i < 16; i++)
+            "ha_user",
+            "ha_password",
+            "ha_broker",
+            "ha_prefix"};
+        for (int i = 0; i < 18; i++)
         {
             if (request->hasArg(keys[i]))
             {
@@ -139,6 +164,25 @@ void handleRoot(AsyncWebServerRequest *request)
                 Serial.println(request->arg(keys[i]));
             }
         }
+        // Port needs special handling as an int
+        if (request->hasArg("ha_port"))
+        {
+            json["ha_port"] = (request->arg("ha_port")).toInt();
+            Serial.println("Received arg=ha_port: " + request->arg("ha_port"));
+        }
+        // HTML checkbox is sent as argument only when checked, so we need to
+        // handle it separately.
+        if (request->hasArg("ha_enabled"))
+        {
+            json["ha_enabled"] = true;
+            Serial.println("Received arg=ha_enabled: " + request->arg("ha_enabled"));
+        }
+        else
+        {
+            json["ha_enabled"] = false;
+            Serial.println("Did not receive arg=ha_enabled.");
+        }
+
         saveConfig();
         Serial.println("Saved new config. Rebooting...");
         request->redirect("http://10.10.10.1/reset");

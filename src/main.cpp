@@ -324,6 +324,11 @@ void loop()
         break;
     }
     delay(50); // Give time to the dotstar to sync
-
+    
+    if (json["ha_enabled"].as<bool>())
+    {
+        publishBatteryLevel();
+    }
+    
     goToSleep();
 }

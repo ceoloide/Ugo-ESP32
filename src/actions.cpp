@@ -273,6 +273,23 @@ String macLastThreeSegments(const uint8_t *mac)
     return result;
 }
 
+void updateConfigWithDefaults()
+{
+    Serial.println("Updating the config with defaults.");
+    // WiFi defaults
+    json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = "";
+    json["gw"] = json["sn"] = "";
+    // Button defaults
+    json["b1"] = json["b2"] = json["b3"] = "";
+    json["b4"] = json["b5"] = json["b6"] = json["b7"] = "";
+    // Home Assistant integration defaults
+    json["ha_enabled"] = false;
+    json["ha_user"] = json["ha_password"] = "";
+    json["ha_broker"] = "homeassistant.local";
+    json["ha_port"] = 1883;
+    json["ha_prefix"] = "homeassistant";
+}
+
 bool saveConfig()
 {
     File configFile = SPIFFS.open("/config.json", FILE_WRITE);
@@ -294,15 +311,15 @@ bool readConfig()
     File stateFile = SPIFFS.open("/config.json");
     if (!stateFile)
     {
-        Serial.println("Failed to read file, creating empty one.");
-        json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = json["gw"] = json["sn"] = json["b1"] = json["b2"] = json["b3"] = json["b4"] = json["b5"] = json["b6"] = json["b7"] = json["mqttuser"] = json["mqttpass"] = "";
+        Serial.println("Failed to read file.");
+        updateConfigWithDefaults();
         saveConfig();
     }
     DeserializationError error = deserializeJson(json, stateFile.readString());
     if (error)
     {
-        Serial.println("Failed to read file, creating empty one.");
-        json["id"] = json["pw"] = json["ip"] = json["d1"] = json["d2"] = json["gw"] = json["sn"] = json["b1"] = json["b2"] = json["b3"] = json["b4"] = json["b5"] = json["b6"] = json["b7"] = json["mqttuser"] = json["mqttpass"] = "";
+        Serial.println("Failed to read file.");
+        updateConfigWithDefaults();
         saveConfig();
     }
     stateFile.close();
@@ -512,7 +529,31 @@ void publishTopic(String topic, StaticJsonDocument<512> &payload)
 
 void publishBatteryLevel()
 {
-    publishTopic("homeassistant/sensor/ugo_[id]/battery", "[blvl]");
+    const char *ha_user = json["ha_user"].as<const char *>();
+    const char *ha_password = json["ha_password"].as<const char *>();
+    const char *ha_broker = json["ha_broker"].as<const char *>();
+    int ha_port = json["ha_port"].as<int>();
+    const char *ha_prefix = json["ha_prefix"].as<const char *>();
+    String stateTopic = String(ha_prefix) + "/sensor/ugo_[id]/state";
+
+#if CORE_DEBUG_LEVEL == 5
+    Serial.println("[ha_user]: " + String(ha_user));
+    Serial.println("[ha_password]: " + String(ha_password));
+    Serial.println("[ha_broker]: " + String(ha_broker));
+    Serial.println("[ha_port]: " + String(ha_port));
+    Serial.println("[ha_prefix]: " + String(ha_prefix));
+    Serial.println("[stateTopic]: " + stateTopic);
+#endif
+
+    if(client.connected()) {
+        client.disconnect();
+    }
+    client.setServer(ha_broker, ha_port);
+    mqtt_connect(ha_user, ha_password);
+    Serial.println("Sending device state data...");
+    publishTopic(stateTopic, "[blvl]");
+    client.loop();
+    client.disconnect();
 }
 
 void publishButtonData(String buttonUri)
@@ -533,7 +574,7 @@ void publishButtonData(String buttonUri)
     int portSeparatorIndex = uriAddress.indexOf(":", credentialsSeparatorIndex + 1);
     int usernameSeparatorIndex = min(uriAddress.indexOf(":"), uriAddress.indexOf("@"));
     int payloadSeparatorIndex = uriPath.indexOf("?");
-    
+
     String brokerAddress = uriAddress.substring(credentialsSeparatorIndex + 1, portSeparatorIndex);
     int brokerPort;
 

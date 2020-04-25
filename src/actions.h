@@ -25,6 +25,8 @@ String macToStr(const uint8_t *mac);
 
 String macLastThreeSegments(const uint8_t *mac);
 
+void updateConfigWithDefaults();
+
 bool saveConfig();
 
 bool readConfig();
