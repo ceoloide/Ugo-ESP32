@@ -1,8 +1,15 @@
 steps:
-- name: 'ceoloide/platformio-ci:latest'
-  dir: .
-  args: ['run']  
-artifacts: 
-  objects: 
-    location: 'gs://$PROJECT_ID-firmwares/$TAG_NAME'
-    paths: ['/workspace/.pio/build/tinypico/firmware.bin']
+  - name: "ceoloide/platformio-ci:latest"
+    dir: .
+    args: ["run"]
+  - name: "ceoloide/platformio-ci:latest"
+    dir: .
+    args: ["run", "--target", "buildfs"]
+artifacts:
+  objects:
+    location: "gs://$PROJECT_ID-firmwares/$TAG_NAME"
+    paths:
+      [
+        "/workspace/.pio/build/tinypico/firmware.bin",
+        "/workspace/.pio/build/tinypico/spiffs.bin",
+      ]
