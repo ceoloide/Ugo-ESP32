@@ -100,9 +100,11 @@ void setup()
     Serial.begin(115200);
     Serial.println("");
 
+#if CORE_DEBUG_LEVEL == 5
     printWakeupReason();
     printResetReason();
     batteryPercentage();
+#endif
 
     // Go to sleep immediately if woke up for something not related to deep sleep
     if (esp_reset_reason() != ESP_RST_DEEPSLEEP)
@@ -152,56 +154,66 @@ void setup()
         WiFi.mode(WIFI_STA);
 
         IPAddress ip_address, gateway_ip, subnet_mask, dns_address_1, dns_address_2;
-        if (ip[0] != '\0' && gw[0] != '\0' && sn[0] != '\0')
+        if (ip[0] != '\0' && ip_address.fromString(String(ip)) &&
+            gw[0] != '\0' && gateway_ip.fromString(String(gw)) &&
+            sn[0] != '\0' && subnet_mask.fromString(String(sn)))
         {
-            if (!ip_address.fromString(String(ip)) || !gateway_ip.fromString(String(gw)) || !subnet_mask.fromString(String(sn)))
+
+            if (d1[0] != '\0' && dns_address_1.fromString(String(d1)))
             {
-                Serial.println("Error setting up static IP, using auto IP instead. Check your configuration.");
-            }
-            else
-            {
-                if (d1[0] != '\0')
+                if (d2[0] != '\0' && dns_address_2.fromString(String(d2)))
                 {
-                    if (!dns_address_1.fromString(String(d1)))
+                    if (WiFi.config(ip_address, gateway_ip, subnet_mask, dns_address_1, dns_address_2))
                     {
-                        Serial.println("Error setting up primary DNS, using auto DNS instead. Check your configuration.");
-                        // The second use of gateway_ip is to pass the gateway as a DNS IP, since otherwise host resolution doesn't work.
-                        if (!WiFi.config(ip_address, gateway_ip, subnet_mask))
-                        {
-                            Serial.println("STA failed to configure with IP, Gateway, Subnet. Using auto config instead.");
-                        }
+                        Serial.println("STA successfully configured with IP, Gateway, Subnet, Primary DNS, Secondary DNS.");
                     }
                     else
                     {
-                        if (d2[0] != '\0')
-                        {
-                            if (!dns_address_2.fromString(String(d2)))
-                            {
-                                Serial.println("Error setting up secondary DNS, using auto DNS instead. Check your configuration.");
-                                if (!WiFi.config(ip_address, gateway_ip, subnet_mask, dns_address_1))
-                                {
-                                    Serial.println("STA failed to configure with IP, Gateway, Subnet, Primary DNS. Using auto config instead.");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (!WiFi.config(ip_address, gateway_ip, subnet_mask, dns_address_1, dns_address_2))
-                            {
-                                Serial.println("STA failed to configure with IP, Gateway, Subnet, Primary DNS, Secondary DNS. Using auto config instead.");
-                            }
-                        }
+                        Serial.println("STA failed to configure with IP, Gateway, Subnet, Primary DNS, Secondary DNS. Using auto config instead.");
+                        Serial.println("[ip]: " + String(ip));
+                        Serial.println("[gw]: " + String(gw));
+                        Serial.println("[sn]: " + String(sn));
+                        Serial.println("[d1]: " + String(d1));
+                        Serial.println("[d2]: " + String(d2));
                     }
                 }
                 else
                 {
-                    // The second use of gateway_ip is to pass the gateway as a DNS IP, since otherwise host resolution doesn't work.
-                    if (!WiFi.config(ip_address, gateway_ip, subnet_mask, gateway_ip))
+                    if (WiFi.config(ip_address, gateway_ip, subnet_mask, dns_address_1))
+                    {
+                        Serial.println("STA successfully configured with IP, Gateway, Subnet, Primary DNS.");
+                    }
+                    else
                     {
                         Serial.println("STA failed to configure with IP, Gateway, Subnet, Primary DNS. Using auto config instead.");
+                        Serial.println("[ip]: " + String(ip));
+                        Serial.println("[gw]: " + String(gw));
+                        Serial.println("[sn]: " + String(sn));
+                        Serial.println("[d1]: " + String(d1));
                     }
                 }
             }
+            else
+            {
+                if (WiFi.config(ip_address, gateway_ip, subnet_mask))
+                {
+                    Serial.println("STA successfully configured with IP, Gateway, Subnet.");
+                }
+                else
+                {
+                    Serial.println("STA failed to configure with IP, Gateway, Subnet. Using auto config instead.");
+                    Serial.println("[ip]: " + String(ip));
+                    Serial.println("[gw]: " + String(gw));
+                    Serial.println("[sn]: " + String(sn));
+                }
+            }
+        }
+        else
+        {
+            Serial.println("Failed to configure static IP.");
+            Serial.println("[ip]: " + String(ip));
+            Serial.println("[gw]: " + String(gw));
+            Serial.println("[sn]: " + String(sn));
         }
 
         WiFi.begin(ssid, pass);
