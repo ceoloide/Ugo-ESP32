@@ -70,8 +70,10 @@ extern AsyncWebServer server;
 extern byte dnsPort;
 extern DNSServer dnsServer;
 
-extern WiFiClient espClient;
-extern PubSubClient client;
+extern WiFiClient espClientInsecure;
+extern PubSubClient mqttClientInsecure;
+extern WiFiClientSecure espClientSecure;
+extern PubSubClient mqttClientSecure;
 
 extern DynamicJsonDocument json; // config buffer
 

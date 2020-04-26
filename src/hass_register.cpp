@@ -20,8 +20,20 @@ void startHassRegister()
     Serial.println("[ha_prefix]: " + String(ha_prefix));
 #endif
 
-    client.setServer(ha_broker, ha_port);
-    mqtt_connect(ha_user, ha_password);
+    PubSubClient mqttClient;
+    if (ha_port == 1883 || ha_port == 1884)
+    {
+        Serial.println("Using a non-secure client.");
+        mqttClient = mqttClientInsecure;
+    }
+    else if (ha_port == 8883 || ha_port == 8884)
+    {
+        Serial.println("Using a secure client.");
+        mqttClient = mqttClientSecure;
+    }
+
+    mqttClient.setServer(ha_broker, ha_port);
+    mqtt_connect(ha_user, ha_password, mqttClient);
 
     Serial.println("Sending MQTT Discovery data...");
     StaticJsonDocument<512> payload;
@@ -46,13 +58,13 @@ void startHassRegister()
     macInformation.add("mac");
     macInformation.add(macToStr(mac));
 
-    publishTopic(configTopic, payload, true);
-    client.loop();
+    publishTopic(configTopic, payload, true, mqttClient);
+    mqttClient.loop();
     delay(1000);
     Serial.println("Sending initial state data...");
-    publishTopic(stateTopic, "[blvl]");
-    client.loop();
-    client.disconnect();
+    publishTopic(stateTopic, "[blvl]", mqttClient);
+    mqttClient.loop();
+    mqttClient.disconnect();
 
     Serial.println("Ugo should now be discovered by Home Assistant. Use following topic to update values:");
     Serial.println(stateTopic);

@@ -36,17 +36,17 @@ uint8_t batteryPercentage();
 
 void sendHttpRequest(String buttonUrl);
 
-void printPubSubClientState();
+void printPubSubClientState(PubSubClient &mqttClient);
 
-void mqtt_connect(const char *mqtt_usr, const char *mqtt_pass);
+void mqtt_connect(const char *mqtt_usr, const char *mqtt_pass, PubSubClient &mqttClient);
 
-void publishTopic(String topic, String payload, bool retained);
+void publishTopic(String topic, String payload, bool retained, PubSubClient &mqttClient);
 
-void publishTopic(String topic, String payload);
+void publishTopic(String topic, String payload, PubSubClient &mqttClient);
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained);
+void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained, PubSubClient &mqttClient);
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload);
+void publishTopic(String topic, StaticJsonDocument<512> &payload, PubSubClient &mqttClient);
 
 void publishBatteryLevel();
 

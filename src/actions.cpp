@@ -408,9 +408,9 @@ void sendHttpRequest(String buttonUri)
     Serial.println(buttonUri);
 }
 
-void printPubSubClientState()
+void printPubSubClientState(PubSubClient &mqttClient)
 {
-    switch (client.state())
+    switch (mqttClient.state())
     {
     case MQTT_CONNECTION_TIMEOUT:
         Serial.println("the server didn't respond within the keepalive time");
@@ -448,17 +448,17 @@ void printPubSubClientState()
     }
 }
 
-void mqtt_connect(const char *username, const char *password)
+void mqtt_connect(const char *username, const char *password, PubSubClient &mqttClient)
 {
     String mqttClientId = "ugo_" + macLastThreeSegments(mac);
     Serial.println("MQTT Client ID: " + mqttClientId);
     int i = 0;
-    while (!client.connected() && i < 5)
+    while (!mqttClient.connected() && i < 5)
     { // Try 5 times, then give up and go to sleep.
         Serial.println("Attempting MQTT connection...");
         if (username[0] != '\0' && password[0] != '\0')
         {
-            if (client.connect(mqttClientId.c_str(), username, password))
+            if (mqttClient.connect(mqttClientId.c_str(), username, password))
             {
                 Serial.println("MQTT connected using credentials.");
                 return;
@@ -466,21 +466,21 @@ void mqtt_connect(const char *username, const char *password)
         }
         else
         {
-            if (client.connect(mqttClientId.c_str()))
+            if (mqttClient.connect(mqttClientId.c_str()))
             {
                 Serial.println("MQTT connected anonymously.");
                 return;
             }
         }
         Serial.print("MQTT connection attempt failed: ");
-        printPubSubClientState();
+        printPubSubClientState(mqttClient);
         ++i;
         delay(10);
     }
     goToSleep();
 }
 
-void publishTopic(String topic, String payload, bool retained)
+void publishTopic(String topic, String payload, bool retained, PubSubClient &mqttClient)
 {
     Serial.println("Original topic: " + topic);
     topic.replace("[id]", macLastThreeSegments(mac));
@@ -496,35 +496,35 @@ void publishTopic(String topic, String payload, bool retained)
     payload.replace("[mac]", macToStr(mac));
     Serial.println("Compiled payload: " + payload);
 
-    if (client.publish(topic.c_str(), payload.c_str(), retained))
+    if (mqttClient.publish(topic.c_str(), payload.c_str(), retained))
     {
         Serial.println("Successfully published.");
     }
     else
     {
         Serial.print("Failed to publish, error = ");
-        printPubSubClientState();
+        printPubSubClientState(mqttClient);
     }
 }
 
-void publishTopic(String topic, String payload)
+void publishTopic(String topic, String payload, PubSubClient &mqttClient)
 {
     bool retained = false;
-    publishTopic(topic, payload, retained);
+    publishTopic(topic, payload, retained, mqttClient);
 }
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained)
+void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained, PubSubClient &mqttClient)
 {
     char serializedPayload[512];
     serializeJson(payload, serializedPayload);
     Serial.println("Serialized payload" + String(serializedPayload));
-    publishTopic(topic, String(serializedPayload), retained);
+    publishTopic(topic, String(serializedPayload), retained, mqttClient);
 }
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload)
+void publishTopic(String topic, StaticJsonDocument<512> &payload, PubSubClient &mqttClient)
 {
     bool retained = false;
-    publishTopic(topic, payload, retained);
+    publishTopic(topic, payload, retained, mqttClient);
 }
 
 void publishBatteryLevel()
@@ -545,15 +545,28 @@ void publishBatteryLevel()
     Serial.println("[stateTopic]: " + stateTopic);
 #endif
 
-    if(client.connected()) {
-        client.disconnect();
+    PubSubClient mqttClient;
+    if (ha_port == 1883 || ha_port == 1884)
+    {
+        Serial.println("Using a non-secure client.");
+        mqttClient = mqttClientInsecure;
     }
-    client.setServer(ha_broker, ha_port);
-    mqtt_connect(ha_user, ha_password);
+    else if (ha_port == 8883 || ha_port == 8884)
+    {
+        Serial.println("Using a secure client.");
+        mqttClient = mqttClientSecure;
+    }
+
+    if (mqttClient.connected())
+    {
+        mqttClient.disconnect();
+    }
+    mqttClient.setServer(ha_broker, ha_port);
+    mqtt_connect(ha_user, ha_password, mqttClient);
     Serial.println("Sending device state data...");
-    publishTopic(stateTopic, "[blvl]");
-    client.loop();
-    client.disconnect();
+    publishTopic(stateTopic, "[blvl]", mqttClient);
+    mqttClient.loop();
+    mqttClient.disconnect();
 }
 
 void publishButtonData(String buttonUri)
@@ -574,6 +587,18 @@ void publishButtonData(String buttonUri)
     int portSeparatorIndex = uriAddress.indexOf(":", credentialsSeparatorIndex + 1);
     int usernameSeparatorIndex = min(uriAddress.indexOf(":"), uriAddress.indexOf("@"));
     int payloadSeparatorIndex = uriPath.indexOf("?");
+
+    PubSubClient mqttClient;
+    if (protocol.equals("mqtt"))
+    {
+        Serial.println("Using a non-secure client.");
+        mqttClient = mqttClientInsecure;
+    }
+    else if (protocol.equals("mqtts"))
+    {
+        Serial.println("Using a secure client.");
+        mqttClient = mqttClientSecure;
+    }
 
     String brokerAddress = uriAddress.substring(credentialsSeparatorIndex + 1, portSeparatorIndex);
     int brokerPort;
@@ -641,11 +666,11 @@ void publishButtonData(String buttonUri)
     Serial.println("MQTT Pass: " + password);
 #endif
 
-    client.setServer(brokerAddress.c_str(), brokerPort);
-    mqtt_connect(username.c_str(), password.c_str());
-    publishTopic(topic, payload);
-    client.loop();
-    client.disconnect();
+    mqttClient.setServer(brokerAddress.c_str(), brokerPort);
+    mqtt_connect(username.c_str(), password.c_str(), mqttClient);
+    publishTopic(topic, payload, mqttClient);
+    mqttClient.loop();
+    mqttClient.disconnect();
 }
 
 void handleButtonAction()
@@ -661,7 +686,7 @@ void handleButtonAction()
     {
         sendHttpRequest(buttonUri);
     }
-    else if (buttonUri.indexOf("mqtt://") >= 0)
+    else if (buttonUri.indexOf("mqtt") >= 0)
     {
         publishButtonData(buttonUri);
     }

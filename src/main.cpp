@@ -67,8 +67,10 @@ AsyncWebServer server(80);
 byte dnsPort = 53;
 DNSServer dnsServer;
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+WiFiClient espClientInsecure;
+PubSubClient mqttClientInsecure(espClientInsecure);
+WiFiClientSecure espClientSecure;
+PubSubClient mqttClientSecure(espClientSecure);
 
 DynamicJsonDocument json(2048); // config buffer
 
