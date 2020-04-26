@@ -1,12 +1,8 @@
 # Ugo-ESP32
 
-A 4-button Wi-Fi connected remote, based on the original [Hugo-ESP8266 concept by mcer12](https://github.com/mcer12/Hugo-ESP8266).
+A 4-button Wi-Fi connected remote, based on the original [Hugo-ESP8266 concept by mcer12](https://github.com/mcer12/Hugo-ESP8266) (see picture below).
 
-## Design
-
-The device follows the design of the [Hugo-ESP8266 concept by mcer12](https://github.com/mcer12/Hugo-ESP8266):
-
-![alt text](https://raw.githubusercontent.com/mcer12/Hugo-ESP8266/master/Images/hugo_numbered.png)
+![Hugo-ESP8266 concept by mcer12](https://raw.githubusercontent.com/mcer12/Hugo-ESP8266/master/Images/hugo_numbered.png)
 
 ## Features
 
@@ -29,9 +25,9 @@ A huge thanks to:
 Shoutout to everyone working on the libraries used for this project:
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
 - [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
-- [ESPAsyncDNSServer](https://github.com/devyte/ESPAsyncDNSServer)
 - [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
-- [TinyPICO-Helper](https://github.com/tinypico/tinypico-arduino)
+- [PubSubClient](https://github.com/knolleary/pubsubclient)
+- [TinyPICO-Helper](https://github.com/)
 
 ## License 
 
