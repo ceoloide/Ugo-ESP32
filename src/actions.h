@@ -1,5 +1,4 @@
-#ifndef ACTIONS_H
-#define ACTIONS_H
+#pragma once
 
 int readButtons();
 
@@ -53,5 +52,3 @@ void publishBatteryLevel();
 void publishButtonData(String buttonUrl);
 
 void handleButtonAction();
-
-#endif

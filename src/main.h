@@ -1,5 +1,4 @@
-#ifndef MAIN_H
-#define MAIN_H
+#pragma once
 
 #include <Arduino.h>
 #include <TinyPICO.h>
@@ -98,5 +97,3 @@ extern DynamicJsonDocument json; // config buffer
 void setup();
 
 void loop();
-
-#endif

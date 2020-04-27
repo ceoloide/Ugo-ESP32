@@ -1,5 +1,4 @@
-#ifndef CONFIG_PORTAL_H
-#define CONFIG_PORTAL_H
+#pragma once
 
 String processor(const String &var);
 
@@ -12,5 +11,3 @@ void notFound(AsyncWebServerRequest *request);
 void handleReset(AsyncWebServerRequest *request);
 
 void startConfigPortal();
-
-#endif

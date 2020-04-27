@@ -1,6 +1,3 @@
-#ifndef OTA_H
-#define OTA_H
+#pragma once
 
 void startOTA();
-
-#endif

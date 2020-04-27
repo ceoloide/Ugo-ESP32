@@ -1,6 +1,3 @@
-#ifndef HASS_REGISTER_H
-#define HASS_REGISTER_H
+#pragma once
 
 void startHassRegister();
-
-#endif
