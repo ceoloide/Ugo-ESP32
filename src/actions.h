@@ -47,7 +47,7 @@ void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained,
 
 void publishTopic(String topic, StaticJsonDocument<512> &payload, PubSubClient &mqttClient);
 
-void publishBatteryLevel();
+void publishDeviceState();
 
 void publishButtonData(String buttonUrl);
 

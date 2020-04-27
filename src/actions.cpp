@@ -484,9 +484,10 @@ void publishTopic(String topic, String payload, bool retained, PubSubClient &mqt
 {
     Serial.println("Original topic: " + topic);
     topic.replace("[id]", macLastThreeSegments(mac));
-    topic.replace("[blvl]", (String)batteryPercentage());
-    topic.replace("[chrg]", (String)tp.GetBatteryVoltage());
+    topic.replace("[blvl]", String(batteryPercentage()));
+    topic.replace("[chrg]", String(tp.GetBatteryVoltage()));
     topic.replace("[mac]", macToStr(mac));
+    topic.replace("[btn]", String(button));
     Serial.println("Compiled topic: " + topic);
 
     Serial.println("Original payload: " + payload);
@@ -494,6 +495,7 @@ void publishTopic(String topic, String payload, bool retained, PubSubClient &mqt
     payload.replace("[blvl]", (String)batteryPercentage());
     payload.replace("[chrg]", (String)tp.GetBatteryVoltage());
     payload.replace("[mac]", macToStr(mac));
+    payload.replace("[btn]", String(button));
     Serial.println("Compiled payload: " + payload);
 
     if (mqttClient.publish(topic.c_str(), payload.c_str(), retained))
@@ -527,7 +529,7 @@ void publishTopic(String topic, StaticJsonDocument<512> &payload, PubSubClient &
     publishTopic(topic, payload, retained, mqttClient);
 }
 
-void publishBatteryLevel()
+void publishDeviceState()
 {
     const char *ha_user = json["ha_user"].as<const char *>();
     const char *ha_password = json["ha_password"].as<const char *>();
@@ -564,7 +566,7 @@ void publishBatteryLevel()
     mqttClient.setServer(ha_broker, ha_port);
     mqtt_connect(ha_user, ha_password, mqttClient);
     Serial.println("Sending device state data...");
-    publishTopic(stateTopic, "[blvl]", mqttClient);
+    publishTopic(stateTopic, "{\"battery\":[blvl],\"voltage\":[chrg],\"button\":[btn]}", mqttClient);
     mqttClient.loop();
     mqttClient.disconnect();
 }

@@ -341,7 +341,7 @@ void loop()
 
     if (json["ha_enabled"].as<bool>())
     {
-        publishBatteryLevel();
+        publishDeviceState();
     }
 
     goToSleep();

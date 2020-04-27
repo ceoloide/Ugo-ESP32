@@ -38,15 +38,17 @@ void startHassRegister()
     Serial.println("Sending MQTT Discovery data...");
     StaticJsonDocument<512> payload;
 
-    String configTopic = String(ha_prefix) + "/sensor/ugo_[id]/config";
+
     String stateTopic = String(ha_prefix) + "/sensor/ugo_[id]/state";
 
-    payload["uniq_id"] = "ugo_[id]";
-    payload["name"] = "Ugo [id] (battery)";
+    String configTopicBattery = String(ha_prefix) + "/sensor/ugo_[id]_battery/config";
+    payload["uniq_id"] = "ugo_[id]_battery";
+    payload["name"] = "Ugo [id] (Battery)";
     payload["stat_t"] = stateTopic;
     payload["dev_cla"] = "battery";
     payload["unit_of_meas"] = "%";
     payload["frc_upd"] = true;
+    payload["value_template"] = "{{ value_json.battery }}";
     JsonObject device = payload.createNestedObject("device");
     device["ids"] = "ugo_[id]";
     device["name"] = "Ugo-ESP32 ([id])";
@@ -57,12 +59,32 @@ void startHassRegister()
     JsonArray macInformation = connections.createNestedArray();
     macInformation.add("mac");
     macInformation.add(macToStr(mac));
+    publishTopic(configTopicBattery, payload, true, mqttClient);
 
-    publishTopic(configTopic, payload, true, mqttClient);
+    String configTopicVoltage = String(ha_prefix) + "/sensor/ugo_[id]_voltage/config";
+    payload["uniq_id"] = "ugo_[id]_voltage";
+    payload["name"] = "Ugo [id] (Voltage)";
+    payload.remove("dev_cla");
+    payload["icon"] = "mdi:flash";
+    payload["unit_of_meas"] = "V";
+    payload["frc_upd"] = true;
+    payload["value_template"] = "{{ value_json.voltage | round(2) }}";
+    publishTopic(configTopicVoltage, payload, true, mqttClient);
+
+    String configTopicButton = String(ha_prefix) + "/sensor/ugo_[id]_button/config";
+    payload["uniq_id"] = "ugo_[id]_button";
+    payload["name"] = "Ugo [id] (Button)";
+    payload["icon"] = "mdi:gesture-tap-button";
+    payload.remove("unit_of_meas");
+    payload["frc_upd"] = true;
+    payload["value_template"] = "{{ value_json.button }}";
+    publishTopic(configTopicButton, payload, true, mqttClient);
+
+
     mqttClient.loop();
     delay(1000);
     Serial.println("Sending initial state data...");
-    publishTopic(stateTopic, "[blvl]", mqttClient);
+    publishTopic(stateTopic, "{\"battery\":[blvl],\"voltage\":[chrg]}", mqttClient);
     mqttClient.loop();
     mqttClient.disconnect();
 
