@@ -50,6 +50,8 @@
 #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to 512"
 #endif
 
+#define MQTT_PUBLISH_TRIES 3
+
 // Initialise the TinyPICO library
 extern TinyPICO tp;
 

@@ -448,20 +448,24 @@ void printPubSubClientState(PubSubClient &mqttClient)
     }
 }
 
-void mqtt_connect(const char *username, const char *password, PubSubClient &mqttClient)
+bool mqtt_connect(const char *username, const char *password, PubSubClient &mqttClient)
 {
+    if (mqttClient.connected())
+    {
+        mqttClient.disconnect();
+    }
     String mqttClientId = "ugo_" + macLastThreeSegments(mac);
     Serial.println("MQTT Client ID: " + mqttClientId);
     int i = 0;
     while (!mqttClient.connected() && i < 5)
-    { // Try 5 times, then give up and go to sleep.
+    {
         Serial.println("Attempting MQTT connection...");
         if (username[0] != '\0' && password[0] != '\0')
         {
             if (mqttClient.connect(mqttClientId.c_str(), username, password))
             {
                 Serial.println("MQTT connected using credentials.");
-                return;
+                return true;
             }
         }
         else
@@ -469,64 +473,65 @@ void mqtt_connect(const char *username, const char *password, PubSubClient &mqtt
             if (mqttClient.connect(mqttClientId.c_str()))
             {
                 Serial.println("MQTT connected anonymously.");
-                return;
+                return true;
             }
         }
         Serial.print("MQTT connection attempt failed: ");
         printPubSubClientState(mqttClient);
+        // The following failure states should not be retried
+        if (mqttClient.state() == MQTT_CONNECT_BAD_PROTOCOL &&
+            mqttClient.state() == MQTT_CONNECT_BAD_CLIENT_ID &&
+            mqttClient.state() == MQTT_CONNECT_BAD_CREDENTIALS &&
+            mqttClient.state() == MQTT_CONNECT_UNAUTHORIZED)
+        {
+            return false;
+        }
         ++i;
         delay(10);
     }
-    goToSleep();
+    return false;
 }
 
-void publishTopic(String topic, String payload, bool retained, PubSubClient &mqttClient)
+void replacePlaceholders(String &original)
+{
+    original.replace("[id]", macLastThreeSegments(mac));
+    original.replace("[blvl]", String(batteryPercentage()));
+    original.replace("[chrg]", String(tp.GetBatteryVoltage()));
+    original.replace("[mac]", macToStr(mac));
+    original.replace("[btn]", String(button));
+}
+
+bool publishTopic(String topic, String payload, bool retained, PubSubClient &mqttClient)
 {
     Serial.println("Original topic: " + topic);
-    topic.replace("[id]", macLastThreeSegments(mac));
-    topic.replace("[blvl]", String(batteryPercentage()));
-    topic.replace("[chrg]", String(tp.GetBatteryVoltage()));
-    topic.replace("[mac]", macToStr(mac));
-    topic.replace("[btn]", String(button));
+    replacePlaceholders(topic);
     Serial.println("Compiled topic: " + topic);
 
     Serial.println("Original payload: " + payload);
-    payload.replace("[id]", macLastThreeSegments(mac));
-    payload.replace("[blvl]", (String)batteryPercentage());
-    payload.replace("[chrg]", (String)tp.GetBatteryVoltage());
-    payload.replace("[mac]", macToStr(mac));
-    payload.replace("[btn]", String(button));
+    replacePlaceholders(payload);
     Serial.println("Compiled payload: " + payload);
 
-    if (mqttClient.publish(topic.c_str(), payload.c_str(), retained))
-    {
-        Serial.println("Successfully published.");
-    }
-    else
-    {
-        Serial.print("Failed to publish, error = ");
-        printPubSubClientState(mqttClient);
-    }
+    return mqttClient.publish(topic.c_str(), payload.c_str(), retained);
 }
 
-void publishTopic(String topic, String payload, PubSubClient &mqttClient)
+bool publishTopic(String topic, String payload, PubSubClient &mqttClient)
 {
     bool retained = false;
-    publishTopic(topic, payload, retained, mqttClient);
+    return publishTopic(topic, payload, retained, mqttClient);
 }
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained, PubSubClient &mqttClient)
+bool publishTopic(String topic, StaticJsonDocument<512> &payload, bool retained, PubSubClient &mqttClient)
 {
     char serializedPayload[512];
     serializeJson(payload, serializedPayload);
     Serial.println("Serialized payload" + String(serializedPayload));
-    publishTopic(topic, String(serializedPayload), retained, mqttClient);
+    return publishTopic(topic, String(serializedPayload), retained, mqttClient);
 }
 
-void publishTopic(String topic, StaticJsonDocument<512> &payload, PubSubClient &mqttClient)
+bool publishTopic(String topic, StaticJsonDocument<512> &payload, PubSubClient &mqttClient)
 {
     bool retained = false;
-    publishTopic(topic, payload, retained, mqttClient);
+    return publishTopic(topic, payload, retained, mqttClient);
 }
 
 void publishDeviceState()
@@ -559,16 +564,24 @@ void publishDeviceState()
         mqttClient = mqttClientSecure;
     }
 
-    if (mqttClient.connected())
-    {
+    mqttClient.setServer(ha_broker, ha_port);
+    if(mqtt_connect(ha_user, ha_password, mqttClient)) {
+        String statePayload = "{\"battery\":[blvl],\"voltage\":[chrg],\"button\":[btn]}";
+        Serial.println("Sending device state data...");
+        for (int i = 0; i < MQTT_PUBLISH_TRIES && !publishTopic(stateTopic, statePayload, mqttClient); i++)
+        {
+            Serial.println("Failed to publish message.");
+            Serial.print("Client state: ");
+            printPubSubClientState(mqttClient);
+            // Check if we are still connected
+            if (mqttClient.state() != MQTT_CONNECTED)
+            {
+                mqtt_connect(ha_user, ha_password, mqttClient);
+            }
+            mqttClient.loop();
+        }
         mqttClient.disconnect();
     }
-    mqttClient.setServer(ha_broker, ha_port);
-    mqtt_connect(ha_user, ha_password, mqttClient);
-    Serial.println("Sending device state data...");
-    publishTopic(stateTopic, "{\"battery\":[blvl],\"voltage\":[chrg],\"button\":[btn]}", mqttClient);
-    mqttClient.loop();
-    mqttClient.disconnect();
 }
 
 void publishButtonData(String buttonUri)
@@ -669,10 +682,22 @@ void publishButtonData(String buttonUri)
 #endif
 
     mqttClient.setServer(brokerAddress.c_str(), brokerPort);
-    mqtt_connect(username.c_str(), password.c_str(), mqttClient);
-    publishTopic(topic, payload, mqttClient);
-    mqttClient.loop();
-    mqttClient.disconnect();
+    if(mqtt_connect(username.c_str(), password.c_str(), mqttClient)) {
+        Serial.println("Publishing button message...");
+        for (int i = 0; i < MQTT_PUBLISH_TRIES && !publishTopic(topic, payload, mqttClient); i++)
+        {
+            Serial.println("Failed to publish message.");
+            Serial.print("Client state: ");
+            printPubSubClientState(mqttClient);
+            // Check if we are still connected
+            if (mqttClient.state() != MQTT_CONNECTED)
+            {
+                mqtt_connect(username.c_str(), password.c_str(), mqttClient);
+            }
+            mqttClient.loop();
+        }
+        mqttClient.disconnect();
+    }
 }
 
 void handleButtonAction()
