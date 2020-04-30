@@ -479,9 +479,9 @@ bool mqtt_connect(const char *username, const char *password, PubSubClient &mqtt
         Serial.print("MQTT connection attempt failed: ");
         printPubSubClientState(mqttClient);
         // The following failure states should not be retried
-        if (mqttClient.state() == MQTT_CONNECT_BAD_PROTOCOL &&
-            mqttClient.state() == MQTT_CONNECT_BAD_CLIENT_ID &&
-            mqttClient.state() == MQTT_CONNECT_BAD_CREDENTIALS &&
+        if (mqttClient.state() == MQTT_CONNECT_BAD_PROTOCOL ||
+            mqttClient.state() == MQTT_CONNECT_BAD_CLIENT_ID ||
+            mqttClient.state() == MQTT_CONNECT_BAD_CREDENTIALS ||
             mqttClient.state() == MQTT_CONNECT_UNAUTHORIZED)
         {
             return false;
