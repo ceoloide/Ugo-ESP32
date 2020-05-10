@@ -17,6 +17,16 @@ A 4-button Wi-Fi connected remote, based on the original [Hugo-ESP8266 concept b
 
 The code currently depends on a [TinyPICO](https://tinypico.com), since I'm using this board for development. TinyPICO has been selected for its very good low-power draw on deep sleep. Check out Unexpected Maker's [Discord server](https://discord.gg/83Nr7rz) for updates and questions on TinyPICO or this project.
 
+### Ugo-ESP32 TinyPICO Shield
+
+The hardware folder contains the PCB and schematics for a TinyPICO shield version of the Ugo-ESP32, featuring similar overall dimensions (60 mm width, 32 mm height) and button layout as the [Philips Hue Dimmer Switch](https://www2.meethue.com/en-us/p/hue-dimmer-switch/046677473372), as well as an RGB led for status notifications.
+
+The board houses the TinyPICO on the back, and can comfortably fit a 60x30x5mm (503060 / 053060) LiPo battery, usually available with a 1300mAh capacity. Early and untested estimates indicate a battery life of roughly 1 year with up to 2 button presses per day.
+
+![PCB front](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/PCB%20Render%20(Front).svg)
+
+![PCB back](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/PCB%20Render%20(Back).svg)
+
 ## Credits
 
 A huge thanks to:
