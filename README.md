@@ -19,13 +19,13 @@ The code currently depends on a [TinyPICO](https://tinypico.com), since I'm usin
 
 ### Ugo-ESP32 TinyPICO Shield
 
-The hardware folder contains the PCB and schematics for a TinyPICO shield version of the Ugo-ESP32, featuring similar overall dimensions (60 mm width, 32 mm height) and button layout as the [Philips Hue Dimmer Switch](https://www2.meethue.com/en-us/p/hue-dimmer-switch/046677473372), as well as an RGB led for status notifications. It also contains the enclosure design and STL files, which are meant for 3D printing.
+The hardware folder contains the PCB and schematics for a TinyPICO shield version of the Ugo-ESP32, featuring similar overall dimensions (35mm width, 145mm height) and button layout as the [Philips Hue Dimmer Switch](https://www2.meethue.com/en-us/p/hue-dimmer-switch/046677473372), as well as an RGB led for status notifications. It also contains the enclosure design and STL files, which are meant for 3D printing.
 
-![Enclosure top](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/Enclosure/Ugo-ESP32%20(TinyPICO%20v0.1)%20-%20Top%20Enclosure%20(Triangle%20%2B%20Square).png)
+![Enclosure top](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/Enclosure/Top%20Enclosure%20(Symbols).png)
 
 The board houses the TinyPICO on the back, and can comfortably fit a 60x30x5mm (503060 / 053060) LiPo battery, usually available with a 1300mAh capacity. Early and untested estimates indicate a battery life of roughly 1 year with up to 2 button presses per day.
 
-![PCB front](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/PCB/PCB%20Render%20(Back).svg)
+![PCB front](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/PCB/PCB%20Render%20(Front).svg)
 
 ![PCB back](https://raw.githubusercontent.com/ceoloide/Ugo-ESP32/master/hardware/Ugo-ESP32%20(TinyPICO)/PCB/PCB%20Render%20(Back).svg)
 
