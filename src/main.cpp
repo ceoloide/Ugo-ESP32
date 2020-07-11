@@ -47,9 +47,9 @@ limitations under the License.
 #define OTA_NAME "Ugo_" // Last 6 MAC address characters will be appended at the end of the OTA name, "Ugo_XXXXXX" by default
 #define AP_NAME "Ugo_"  // Last 6 MAC address characters will be appended at the end of the AP name, "Ugo_XXXXXX" by default
 #define button1_pin 25
-#define button2_pin 26
+#define button2_pin 4
 #define button3_pin 27
-#define button4_pin 4
+#define button4_pin 26
 #define OTA_TIMEOUT 300000    // 5 minutes
 #define CONFIG_TIMEOUT 300000 // 5 minutes
 
