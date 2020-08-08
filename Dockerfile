@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.7
+FROM python:3.8.5-slim
 
-ENV APP_VERSION="4.3.1" \
+ENV APP_VERSION="4.3.4" \
     APP="platformio"
 
 LABEL app.name="${APP}" \
