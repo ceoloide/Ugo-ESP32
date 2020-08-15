@@ -16,6 +16,54 @@ limitations under the License.
 
 #include "main.h"
 
+// Converts separate R,G,B values to a single packed value
+uint32_t packColor(uint8_t r, uint8_t g, uint8_t b)
+{
+    return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+}
+
+void setLedColor(uint8_t r, uint8_t g, uint8_t b )
+{
+#ifdef ENABLE_PCB_LED
+    int leds[] = {RED_LED_PIN, GREEN_LED_PIN, BLUE_LED_PIN};
+    int values[] = {r, g, b};
+    for(int led = 0; led < leds.length(); led++)
+    {
+        if(values[led] > 127)
+        {
+            digitalWrite(leds[led], RGB_LED_ON);
+        }
+        else
+        {
+            digitalWrite(leds[led], RGB_LED_OFF);
+        }
+    }
+#endif
+#ifdef ENABLE_TP_LED
+    tp.DotStar_SetPixelColor(r, g, b);
+#endif
+    delay(LED_CHANGE_DELAY);
+}
+
+void setLedColor(uint32_t rgb)
+{
+    uint8_t r = (uint8_t)rgb;
+    uint8_t g = (uint8_t)(rgb >>  8);
+    uint8_t b = (uint8_t)(rgb >> 16);
+    setLedColor(r, g, b);
+}
+
+void turnOffLed()
+{
+#ifdef ENABLE_PCB_LED
+    setLedColor(0, 0, 0);
+#endif
+#ifdef ENABLE_TP_LED
+    tp.DotStar_Clear();
+    delay(LED_CHANGE_DELAY);
+#endif
+}
+
 int readButtons()
 {
     int GPIO_reason = esp_sleep_get_ext1_wakeup_status();
@@ -132,7 +180,7 @@ void goToSleep()
 
     // To power down the DotStar for deep sleep you call this
     tp.DotStar_SetPower(false);
-    delay(50);
+    delay(LED_CHANGE_DELAY);
 
     esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
     esp_deep_sleep_start();
@@ -147,37 +195,37 @@ void blinkResetReason()
     switch (reset_reason)
     {
     case ESP_RST_UNKNOWN:
-        color = tp.Color(255, 255, 255);
+        color = packColor(255, 255, 255);
         break; // white
     case ESP_RST_POWERON:
-        color = tp.Color(0, 0, 255);
+        color = packColor(0, 0, 255);
         break; // blue
     case ESP_RST_SW:
-        color = tp.Color(0, 255, 0);
+        color = packColor(0, 255, 0);
         break; // green (software reset via esp_restart)
     case ESP_RST_PANIC:
-        color = tp.Color(255, 0, 0);
+        color = packColor(255, 0, 0);
         break; // red
     case ESP_RST_INT_WDT:
     case ESP_RST_TASK_WDT:
     case ESP_RST_WDT:
-        color = tp.Color(255, 0, 255);
+        color = packColor(255, 0, 255);
         break; // purple (watchdog)
     case ESP_RST_BROWNOUT:
-        color = tp.Color(255, 255, 0);
+        color = packColor(255, 255, 0);
         break; // yellow
     case ESP_RST_SDIO:
-        color = tp.Color(150, 75, 0);
+        color = packColor(150, 75, 0);
         break;
     default:
-        color = tp.Color(100, 100, 100);
+        color = packColor(100, 100, 100);
         break;
     }
     for (int i = 1; i <= 4; i++)
     {
-        tp.DotStar_Clear();
+        turnOffLed();
         delay(100);
-        tp.DotStar_SetPixelColor(color);
+        setLedColor(color);
         delay(100);
     }
 }
