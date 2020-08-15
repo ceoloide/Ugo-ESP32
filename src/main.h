@@ -71,8 +71,13 @@ limitations under the License.
 #endif
 
 #if (defined(RGB_COMMON_ANODE) && defined(RGB_COMMON_CATHODE)) || defined(RGB_COMMON_ANODE)
+<<<<<<< HEAD
 #define RGB_LED_ON HIGH
 #define RGB_LED_OFF LOW
+=======
+#define RGB_LED_ON HIGH;
+#define RGB_LED_OFF LOW;
+>>>>>>> eb55bbf40cda695b3ee567116da0e8256d15bcd9
 #endif
 
 #define LED_CHANGE_DELAY 50  // Amount of time (ms) to wait after LED color / status change 
