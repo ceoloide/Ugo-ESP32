@@ -26,10 +26,10 @@ void setLedColor(uint8_t r, uint8_t g, uint8_t b )
 {
 #ifdef ENABLE_PCB_LED
     int leds[] = {RED_LED_PIN, GREEN_LED_PIN, BLUE_LED_PIN};
-    int values[] = {r, g, b};
+    int rgb[] = {r, g, b};
     for(int led = 0; led < sizeof(leds); led++)
     {
-        if(values[led] > 127)
+        if(rgb[led] > 127)
         {
             digitalWrite(leds[led], RGB_LED_ON);
         }
