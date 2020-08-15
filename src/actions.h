@@ -16,6 +16,17 @@ limitations under the License.
 
 #pragma once
 
+// Converts separate R,G,B values to a single packed value
+uint32_t packColor(uint8_t r, uint8_t g, uint8_t b);
+
+void setLedColor(uint8_t r, uint8_t g, uint8_t b);
+
+void setLedColor(uint32_t rgb);
+
+void turnOffLed();
+
+int readButtons();
+
 int readButtons();
 
 void toggleConfigMode();

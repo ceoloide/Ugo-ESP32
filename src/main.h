@@ -48,10 +48,35 @@ limitations under the License.
 
 #define OTA_NAME "Ugo_" // Last 6 MAC address characters will be appended at the end of the OTA name, "Ugo_XXXXXX" by default
 #define AP_NAME "Ugo_"  // Last 6 MAC address characters will be appended at the end of the AP name, "Ugo_XXXXXX" by default
+
+// Button PINs
 #define button1_pin 25
 #define button2_pin 4
 #define button3_pin 27
 #define button4_pin 26
+
+// LED PINs
+#define RED_LED_PIN 23
+#define GREEN_LED_PIN 19
+#define BLUE_LED_PIN 18
+
+#if !defined(RGB_COMMON_ANODE) && !defined(RGB_COMMON_CATHODE)
+// Defaulting to RGB_COMMON_ANODE since that's the RGB LED on the Ugo-ESP32 (TinyPICO) PCB v0.2
+#define RGB_COMMON_ANODE
+#endif
+
+#ifdef RGB_COMMON_CATHODE
+#define RGB_LED_ON LOW;
+#define RGB_LED_OFF HIGH;
+#endif
+
+#if (defined(RGB_COMMON_ANODE) && defined(RGB_COMMON_CATHODE)) || defined(RGB_COMMON_ANODE)
+#define RGB_LED_ON HIGH
+#define RGB_LED_OFF LOW
+#endif
+
+#define LED_CHANGE_DELAY 50  // Amount of time (ms) to wait after LED color / status change 
+
 #define OTA_TIMEOUT 300000    // 5 minutes
 #define CONFIG_TIMEOUT 300000 // 5 minutes
 

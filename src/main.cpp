@@ -46,10 +46,35 @@ limitations under the License.
 
 #define OTA_NAME "Ugo_" // Last 6 MAC address characters will be appended at the end of the OTA name, "Ugo_XXXXXX" by default
 #define AP_NAME "Ugo_"  // Last 6 MAC address characters will be appended at the end of the AP name, "Ugo_XXXXXX" by default
+
+// Button PINs
 #define button1_pin 25
 #define button2_pin 4
 #define button3_pin 27
 #define button4_pin 26
+
+// LED PINs
+#define RED_LED_PIN 23
+#define GREEN_LED_PIN 19
+#define BLUE_LED_PIN 18
+
+#if !defined(RGB_COMMON_ANODE) && !defined(RGB_COMMON_CATHODE)
+// Defaulting to RGB_COMMON_ANODE since that's the RGB LED on the Ugo-ESP32 (TinyPICO) PCB v0.2
+#define RGB_COMMON_ANODE
+#endif
+
+#ifdef RGB_COMMON_CATHODE
+#define RGB_LED_ON LOW
+#define RGB_LED_OFF HIGH
+#endif
+
+#if (defined(RGB_COMMON_ANODE) && defined(RGB_COMMON_CATHODE)) || defined(RGB_COMMON_ANODE)
+#define RGB_LED_ON HIGH
+#define RGB_LED_OFF LOW
+#endif
+
+#define LED_CHANGE_DELAY 50  // Amount of time (ms) to wait after LED color / status change 
+
 #define OTA_TIMEOUT 300000    // 5 minutes
 #define CONFIG_TIMEOUT 300000 // 5 minutes
 
@@ -124,6 +149,16 @@ void setup()
     printWakeupReason();
     printResetReason();
     batteryPercentage();
+#endif
+
+#if ENABLE_PCB_LED
+    // If PCB LED is enabled, initialize them
+    pinMode(RED_LED_PIN, OUTPUT);
+    pinMode(GREEN_LED_PIN, OUTPUT);
+    pinMode(BLUE_LED_PIN, OUTPUT);
+    digitalWrite(RED_LED_PIN, RGB_LED_OFF);
+    digitalWrite(GREEN_LED_PIN, RGB_LED_OFF);
+    digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
 #endif
 
     // Go to sleep immediately if woke up for something not related to deep sleep
@@ -275,8 +310,7 @@ void setup()
 
     ArduinoOTA.onStart([]() {
         Serial.println("OTA UPLOAD STARTED...");
-        tp.DotStar_SetPixelColor(0, 0, 255);
-        delay(50);
+        setLedColor(0, 0, 255);
     });
 }
 
@@ -288,8 +322,7 @@ void loop()
     if (deviceMode == CONFIG_MODE)
     {
         Serial.println("STARTING CONFIG ACCESS POINT...");
-        tp.DotStar_SetPixelColor(255, 255, 0);
-        delay(50);
+        setLedColor(255, 255, 0);
         startConfigPortal();
         Serial.println("RETURNING TO NORMAL MODE...");
         deviceMode = NORMAL_MODE;
@@ -302,8 +335,7 @@ void loop()
     if (deviceMode == HASS_REGISTER_MODE)
     {
         Serial.println("REGISTERING WITH HASS.IO...");
-        tp.DotStar_SetPixelColor(255, 0, 255);
-        delay(50);
+        setLedColor(255, 0, 255);
         startHassRegister();
         Serial.println("RETURNING TO NORMAL MODE...");
         deviceMode = NORMAL_MODE;
@@ -316,8 +348,7 @@ void loop()
     if (deviceMode == OTA_MODE)
     {
         Serial.println("WAITING FOR OTA UPDATE...");
-        tp.DotStar_SetPixelColor(0, 255, 255);
-        delay(50);
+        setLedColor(0, 255, 255);
         startOTA();
         Serial.println("RETURNING TO NORMAL MODE...");
         deviceMode = NORMAL_MODE;
@@ -332,30 +363,29 @@ void loop()
     switch (button)
     {
     case 1:
-        tp.DotStar_SetPixelColor(255, 0, 0);
+        setLedColor(255, 0, 0);
         break;
     case 2:
-        tp.DotStar_SetPixelColor(0, 255, 0);
+        setLedColor(0, 255, 0);
         break;
     case 3:
-        tp.DotStar_SetPixelColor(0, 0, 255);
+        setLedColor(0, 0, 255);
         break;
     case 4:
-        tp.DotStar_SetPixelColor(0, 255, 255);
+        setLedColor(0, 255, 255);
         break;
     case 5:
-        tp.DotStar_SetPixelColor(255, 0, 255);
+        setLedColor(255, 0, 255);
         break;
     case 6:
-        tp.DotStar_SetPixelColor(255, 255, 0);
+        setLedColor(255, 255, 0);
         break;
     case 7:
-        tp.DotStar_SetPixelColor(255, 255, 255);
+        setLedColor(255, 255, 255);
         break;
     default:
         break;
     }
-    delay(50); // Give time to the dotstar to sync
 
     if (json["ha_enabled"].as<bool>())
     {
