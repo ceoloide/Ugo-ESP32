@@ -53,10 +53,18 @@ limitations under the License.
 #define button3_pin 27
 #define button4_pin 26
 
-// LED PINs
+// On the Ugo-ESP32 (TinyPICO) v0.2 PCB, the RGB led has been rotated 180 degrees
+// This means the Green LED pin is now the common anode, the 3V3 pin is the Green LED, which is now always off
+// And the Red and Blue pins are reversed. It's also not possible to turn on both Red and Blue leds at the same time.
+#ifdef ENABLE_V_0_2_PCB_LED_FIX
+#define RED_LED_PIN 18
+#define COMMON_ANODE_PIN 19
+#define BLUE_LED_PIN 23
+#else
 #define RED_LED_PIN 23
 #define GREEN_LED_PIN 19
 #define BLUE_LED_PIN 18
+#endif
 
 #if !defined(RGB_COMMON_ANODE) && !defined(RGB_COMMON_CATHODE)
 // Defaulting to RGB_COMMON_ANODE since that's the RGB LED on the Ugo-ESP32 (TinyPICO) PCB v0.2
@@ -64,13 +72,13 @@ limitations under the License.
 #endif
 
 #ifdef RGB_COMMON_CATHODE
-#define RGB_LED_ON LOW
-#define RGB_LED_OFF HIGH
+#define RGB_LED_ON HIGH
+#define RGB_LED_OFF LOW
 #endif
 
 #if (defined(RGB_COMMON_ANODE) && defined(RGB_COMMON_CATHODE)) || defined(RGB_COMMON_ANODE)
-#define RGB_LED_ON HIGH
-#define RGB_LED_OFF LOW
+#define RGB_LED_ON LOW
+#define RGB_LED_OFF HIGH
 #endif
 
 #define LED_CHANGE_DELAY 50  // Amount of time (ms) to wait after LED color / status change 
@@ -154,10 +162,15 @@ void setup()
 #if ENABLE_PCB_LED
     // If PCB LED is enabled, initialize them
     pinMode(RED_LED_PIN, OUTPUT);
-    pinMode(GREEN_LED_PIN, OUTPUT);
-    pinMode(BLUE_LED_PIN, OUTPUT);
     digitalWrite(RED_LED_PIN, RGB_LED_OFF);
+#ifdef ENABLE_V_0_2_PCB_LED_FIX
+    pinMode(COMMON_ANODE_PIN, OUTPUT);
+    digitalWrite(COMMON_ANODE_PIN, LOW);  // Power off
+#else
+    pinMode(GREEN_LED_PIN, OUTPUT);
     digitalWrite(GREEN_LED_PIN, RGB_LED_OFF);
+#endif
+    pinMode(BLUE_LED_PIN, OUTPUT);
     digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
 #endif
 

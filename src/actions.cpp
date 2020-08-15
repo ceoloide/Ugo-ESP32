@@ -25,6 +25,24 @@ uint32_t packColor(uint8_t r, uint8_t g, uint8_t b)
 void setLedColor(uint8_t r, uint8_t g, uint8_t b )
 {
 #ifdef ENABLE_PCB_LED
+#ifdef ENABLE_V_0_2_PCB_LED_FIX
+    digitalWrite(COMMON_ANODE_PIN, HIGH);  // Power on
+    if (r > 127 || g > 127)
+    {
+        digitalWrite(RED_LED_PIN, RGB_LED_ON);
+        digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
+    }
+    else if (b <= 127)
+    {
+        digitalWrite(RED_LED_PIN, RGB_LED_OFF);
+        digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
+    }
+    else
+    {
+        digitalWrite(RED_LED_PIN, RGB_LED_OFF);
+        digitalWrite(BLUE_LED_PIN, RGB_LED_ON);
+    }
+#else
     int leds[] = {RED_LED_PIN, GREEN_LED_PIN, BLUE_LED_PIN};
     int rgb[] = {r, g, b};
     for(int led = 0; led < sizeof(leds); led++)
@@ -38,6 +56,7 @@ void setLedColor(uint8_t r, uint8_t g, uint8_t b )
             digitalWrite(leds[led], RGB_LED_OFF);
         }
     }
+#endif
 #endif
 #ifdef ENABLE_TP_LED
     tp.DotStar_SetPixelColor(r, g, b);
@@ -57,6 +76,9 @@ void turnOffLed()
 {
 #ifdef ENABLE_PCB_LED
     setLedColor(0, 0, 0);
+#ifdef ENABLE_V_0_2_PCB_LED_FIX
+    digitalWrite(COMMON_ANODE_PIN, LOW);
+#endif
 #endif
 #ifdef ENABLE_TP_LED
     tp.DotStar_Clear();
