@@ -27,35 +27,12 @@ void setLedColor(uint8_t r, uint8_t g, uint8_t b )
 #ifdef ENABLE_PCB_LED
 #ifdef ENABLE_V_0_2_PCB_LED_FIX
     digitalWrite(COMMON_ANODE_PIN, HIGH);  // Power on
-    if (r > 127 || g > 127)
-    {
-        digitalWrite(RED_LED_PIN, RGB_LED_ON);
-        digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
-    }
-    else if (b <= 127)
-    {
-        digitalWrite(RED_LED_PIN, RGB_LED_OFF);
-        digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
-    }
-    else
-    {
-        digitalWrite(RED_LED_PIN, RGB_LED_OFF);
-        digitalWrite(BLUE_LED_PIN, RGB_LED_ON);
-    }
+    ledcWrite(RED_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - map(max(r, g), 0, 255, 0, 75))); 
+    ledcWrite(BLUE_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - map(b, 0, 255, 0, 185)));
 #else
-    int leds[] = {RED_LED_PIN, GREEN_LED_PIN, BLUE_LED_PIN};
-    int rgb[] = {r, g, b};
-    for(int led = 0; led < sizeof(leds); led++)
-    {
-        if(rgb[led] > 127)
-        {
-            digitalWrite(leds[led], RGB_LED_ON);
-        }
-        else
-        {
-            digitalWrite(leds[led], RGB_LED_OFF);
-        }
-    }
+    ledcWrite(RED_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - r); 
+    ledcWrite(GREEN_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - g); 
+    ledcWrite(BLUE_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - b);
 #endif
 #endif
 #ifdef ENABLE_TP_LED
@@ -77,7 +54,7 @@ void turnOffLed()
 #ifdef ENABLE_PCB_LED
     setLedColor(0, 0, 0);
 #ifdef ENABLE_V_0_2_PCB_LED_FIX
-    digitalWrite(COMMON_ANODE_PIN, LOW);
+    digitalWrite(COMMON_ANODE_PIN, LOW);  // Power off
 #endif
 #endif
 #ifdef ENABLE_TP_LED

@@ -79,18 +79,17 @@ void setup()
 #endif
 
 #if ENABLE_PCB_LED
-    // If PCB LED is enabled, initialize them
-    pinMode(RED_LED_PIN, OUTPUT);
-    digitalWrite(RED_LED_PIN, RGB_LED_OFF);
+    ledcSetup(RED_LED_PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
+    ledcAttachPin(RED_LED_PIN, RED_LED_PWM_CHANNEL);
 #ifdef ENABLE_V_0_2_PCB_LED_FIX
     pinMode(COMMON_ANODE_PIN, OUTPUT);
     digitalWrite(COMMON_ANODE_PIN, LOW);  // Power off
 #else
-    pinMode(GREEN_LED_PIN, OUTPUT);
-    digitalWrite(GREEN_LED_PIN, RGB_LED_OFF);
+    ledcSetup(GREEN_LED_PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
+    ledcAttachPin(GREEN_LED_PIN, GREEN_LED_PWM_CHANNEL);
 #endif
-    pinMode(BLUE_LED_PIN, OUTPUT);
-    digitalWrite(BLUE_LED_PIN, RGB_LED_OFF);
+    ledcSetup(BLUE_LED_PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
+    ledcAttachPin(BLUE_LED_PIN, BLUE_LED_PWM_CHANNEL);
 #endif
 
     // Go to sleep immediately if woke up for something not related to deep sleep

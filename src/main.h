@@ -68,6 +68,13 @@ limitations under the License.
 #define BLUE_LED_PIN 18
 #endif
 
+#define RED_LED_PWM_CHANNEL 0
+#define GREEN_LED_PWM_CHANNEL 1
+#define BLUE_LED_PWM_CHANNEL 2
+
+#define PWM_FREQUENCY 5000
+#define PWM_RESOLUTION 8
+
 #if !defined(RGB_COMMON_ANODE) && !defined(RGB_COMMON_CATHODE)
 // Defaulting to RGB_COMMON_ANODE since that's the RGB LED on the Ugo-ESP32 (TinyPICO) PCB v0.2
 #define RGB_COMMON_ANODE
@@ -76,11 +83,13 @@ limitations under the License.
 #ifdef RGB_COMMON_CATHODE
 #define RGB_LED_ON HIGH
 #define RGB_LED_OFF LOW
+#define LED_PWM_CONSTANT 0
 #endif
 
 #if (defined(RGB_COMMON_ANODE) && defined(RGB_COMMON_CATHODE)) || defined(RGB_COMMON_ANODE)
 #define RGB_LED_ON LOW
 #define RGB_LED_OFF HIGH
+#define LED_PWM_CONSTANT 255
 #endif
 
 #define LED_CHANGE_DELAY 50  // Amount of time (ms) to wait after LED color / status change 
