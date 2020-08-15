@@ -30,9 +30,9 @@ void setLedColor(uint8_t r, uint8_t g, uint8_t b )
     ledcWrite(RED_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - map(max(r, g), 0, 255, 0, 75))); 
     ledcWrite(BLUE_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - map(b, 0, 255, 0, 185)));
 #else
-    ledcWrite(RED_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - r); 
-    ledcWrite(GREEN_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - g); 
-    ledcWrite(BLUE_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - b);
+    ledcWrite(RED_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - r)); 
+    ledcWrite(GREEN_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - g)); 
+    ledcWrite(BLUE_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - b));
 #endif
 #endif
 #ifdef ENABLE_TP_LED
