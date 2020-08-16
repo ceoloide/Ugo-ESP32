@@ -83,13 +83,13 @@ limitations under the License.
 #ifdef RGB_COMMON_CATHODE
 #define RGB_LED_ON HIGH
 #define RGB_LED_OFF LOW
-#define LED_PWM_CONSTANT 0
+#define INVERT_LED_PWM_SENSE 0
 #endif
 
 #if (defined(RGB_COMMON_ANODE) && defined(RGB_COMMON_CATHODE)) || defined(RGB_COMMON_ANODE)
 #define RGB_LED_ON LOW
 #define RGB_LED_OFF HIGH
-#define LED_PWM_CONSTANT 255
+#define INVERT_LED_PWM_SENSE 1
 #endif
 
 #define LED_CHANGE_DELAY 50  // Amount of time (ms) to wait after LED color / status change 

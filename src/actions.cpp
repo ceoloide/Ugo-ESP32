@@ -27,8 +27,9 @@ void setLedColor(uint8_t r, uint8_t g, uint8_t b )
 #ifdef ENABLE_PCB_LED
 #ifdef ENABLE_V_0_2_PCB_LED_FIX
     digitalWrite(COMMON_ANODE_PIN, HIGH);  // Power on
-    ledcWrite(RED_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - map(max(r, g), 0, 255, 0, 75))); 
-    ledcWrite(BLUE_LED_PWM_CHANNEL, abs(LED_PWM_CONSTANT - map(b, 0, 255, 0, 185)));
+    // The PWM outputs are remapped to account for the wrong resistance
+    ledcWrite(RED_LED_PWM_CHANNEL, map(max(r, g), 0, 255, 0, 75));
+    ledcWrite(BLUE_LED_PWM_CHANNEL, map(b, 0, 255, 0, 185));
 #else
     ledcWrite(RED_LED_PWM_CHANNEL, r); 
     ledcWrite(GREEN_LED_PWM_CHANNEL, g); 

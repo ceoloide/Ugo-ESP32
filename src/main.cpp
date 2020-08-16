@@ -79,25 +79,20 @@ void setup()
 #endif
 
 #if ENABLE_PCB_LED
-    // Using GPIO.func_out_sel_cfg[pin].inv_sel = 1;
-    // Inverts the sense of the GPIO output.
-    // This must be done AFTER initialising PWM control for the GPIO pin
-    // This chage must be done in conjunction with removing sense invert
-    // in setLedColor() i.e. use 0-255 instead of 255-0
     ledcSetup(RED_LED_PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
     ledcAttachPin(RED_LED_PIN, RED_LED_PWM_CHANNEL);
-    GPIO.func_out_sel_cfg[RED_LED_PIN].inv_sel = 1;
+    GPIO.func_out_sel_cfg[RED_LED_PIN].inv_sel = INVERT_LED_PWM_SENSE;
 #ifdef ENABLE_V_0_2_PCB_LED_FIX
     pinMode(COMMON_ANODE_PIN, OUTPUT);
     digitalWrite(COMMON_ANODE_PIN, LOW);  // Power off
 #else
     ledcSetup(GREEN_LED_PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
     ledcAttachPin(GREEN_LED_PIN, GREEN_LED_PWM_CHANNEL);
-    GPIO.func_out_sel_cfg[GREEN_LED_PIN].inv_sel = 1;
+    GPIO.func_out_sel_cfg[GREEN_LED_PIN].inv_sel = INVERT_LED_PWM_SENSE;
 #endif
     ledcSetup(BLUE_LED_PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
     ledcAttachPin(BLUE_LED_PIN, BLUE_LED_PWM_CHANNEL);
-    GPIO.func_out_sel_cfg[BLUE_LED_PIN].inv_sel = 1;
+    GPIO.func_out_sel_cfg[BLUE_LED_PIN].inv_sel = INVERT_LED_PWM_SENSE;
 #endif
 
     // Go to sleep immediately if woke up for something not related to deep sleep
